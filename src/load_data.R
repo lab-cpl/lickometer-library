@@ -7,8 +7,9 @@
 
 library(tidyverse)
 
-# loads data into list
-load_files_into_list <- function(path){
+# loads data in a directory
+# adds date and time columns
+load_data <- function(path){
 	list.files(
 		   path = path,
 		   pattern = ".csv",
@@ -50,6 +51,3 @@ format_data_type <- function(raw_file){
 						exito = as.factor(exito)
 			   )
 }
-
-load_files_into_list("/home/nicoluarte/lab-cpl/lickometer-library/test/files")
-
