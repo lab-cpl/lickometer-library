@@ -1,2 +1,2 @@
 n_sesion,fecha,droga,dosis,ID,hora_inicio,hora_termino,n_licometro,estimulo_spout_1,estimulo_spout_2,licks_inicio_spout_1,licks_inicio_spout_2,licks_fin_spout_1,licks_fin_spout_2,eventos_inicio_spout_1,eventos_inicio_spout_2,eventos_fin_spout_1,eventos_fin_spout_2,ml_consumidos_spout_1,ml_consumidos_spout_2
-1,20211104,ox1,A,282,0,1,2,3,4,5,6,7,8,9,10,11,12,13,14
+1,20211104,ox1,A,282,12:00:00 PM,01:00:00 PM,2,sacarosa,agua,5,6,7,8,9,10,11,12,13,14
