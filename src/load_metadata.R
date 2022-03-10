@@ -33,10 +33,3 @@ load_metadata <- function(x){
 		}
 		)
 }
-
-read_csv("../test/files/metadata_example.csv") -> a
-
-load_metadata(a) -> b
-
-
-
