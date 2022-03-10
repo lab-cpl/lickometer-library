@@ -3,8 +3,6 @@
 library(tidyverse)
 
 load_metadata <- function(x){
-		tryCatch(
-			 {
 		x %>% mutate(
 		       n_sesion = as.factor(n_sesion),
 		       fecha = lubridate::ymd(fecha),
@@ -27,9 +25,4 @@ load_metadata <- function(x){
 		       ml_consumidos_spout_1 = as.numeric(ml_consumidos_spout_1),
 		       ml_consumidos_spout_2 = as.numeric(ml_consumidos_spout_2)
 		       )
-			 },
-		warning = function(w){
-			message("Please check column data format")
-		}
-		)
 }

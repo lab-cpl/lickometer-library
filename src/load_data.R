@@ -12,7 +12,7 @@ library(tidyverse)
 load_data <- function(path){
 	list.files(
 		   path = path,
-		   pattern = ".csv",
+		   pattern = "_[0-9]+\\.csv",
 		   full.names = T
 		   ) %>%
 	set_names() %>%
@@ -23,14 +23,27 @@ load_data <- function(path){
 	       fecha = source_to_date(source),
 	       fecha_ms = source_to_date_posix_ms(source),
 	       tiempo_fecha_ms = fecha_ms + tiempo,
-	       tiempo_fecha = fecha + lubridate::seconds(tiempo / 1000)
+	       tiempo_fecha = source_to_date_sec(source) + lubridate::seconds(tiempo / 1000)
 	       ) %>%
 	format_data_type(.)
 }
 # creates a column with date
 source_to_date <- function(x) {
 	sub('\\..*$', '', basename(x)) %>%
-		lubridate::ymd_hms(.)
+		lubridate::ymd_hms(.) -> tmp
+	out <- lubridate::ymd(
+			      paste(
+				    lubridate::year(tmp),
+				    lubridate::month(tmp),
+				    lubridate::day(tmp)
+				    )
+			      )
+	return(out)
+}
+source_to_date_sec <- function(x) {
+	sub('\\..*$', '', basename(x)) %>%
+		lubridate::ymd_hms(.) -> out
+	return(out)
 }
 # creates a column with posix date in ms
 source_to_date_posix_ms <- function(x) {
