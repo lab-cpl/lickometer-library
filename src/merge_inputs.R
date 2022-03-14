@@ -18,5 +18,6 @@ merge_inputs <- function(metadata, data_directory){
 	}
 	else{
 		print("Data merged!")
+		return(out)
 	}
 }

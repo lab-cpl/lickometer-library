@@ -6,6 +6,7 @@
 # takes as parameters path and assumes extension is .csv
 
 library(tidyverse)
+library(validate)
 
 # loads data in a directory
 # adds date and time columns
@@ -63,4 +64,32 @@ format_data_type <- function(raw_file){
 						evento = as.numeric(evento),
 						exito = as.factor(exito)
 			   )
+}
+
+load_data_as_char <- function(path){
+	list.files(
+		   path = path,
+		   pattern = "_[0-9]+\\.csv",
+		   full.names = T
+		   ) %>%
+	set_names() %>%
+	purrr::map_dfr(
+			  read_csv, .id = "source", col_types = cols(.default = "c")
+			  )
+}
+
+validate_data <- function(data_as_char){
+	rules <- validate::validator(
+				     field_format(ID, "^[0-9]+$", type = "regex"),
+				     field_format(sensor, "^[0-9]$", type = "regex"),
+				     field_format(tiempo, "^[0-9]+$", type = "regex"),
+				     field_format(actividad, "^[0-9]+$", type = "regex"),
+				     field_format(evento, "^[0-9]+$", type = "regex"),
+				     field_format(exito, "^[0-9]+$", type = "regex")
+				     )
+	out <- confront(data_as_char, rules)
+	out_tibble <- summary(out)
+	out_tibble %>%
+		mutate(name = names(data_as_char[-1])) -> out_tibble
+	return(out_tibble)
 }
