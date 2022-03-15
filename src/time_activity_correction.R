@@ -1,16 +1,18 @@
 # time_activity_correction
-# v 0
+# v 1
 
 library(tidyverse)
 library(dplyr)
 library(lubridate)
 
-#import data from merged -csv
-#add time taken to complete activity and beginning of the program
-#compare time of activity to beginning and end time of the procedure
-#add a column that contains binary data for valid/non-valid rows (0: no 1:yes)
+# 1: import data from merged -csv
+# 2: add time of each activity to the starting time of the program
+#    (done as column "tiempo_fecha_ms")
+# 3: compare time of each activity to start and end time of each session
+# 4: add a column that contains binary data for valid/non-valid rows
+#    (0: no 1:yes)
 
-#hora_inicio+fecha_ms < tiempo_fecha_ms < hora_termino+fecha_ms
+# hora_inicio + fecha_ms <= tiempo_fecha_ms < hora_termino + fecha_ms
 
 merged_data <-
   data.frame(read.csv(
@@ -19,11 +21,10 @@ merged_data <-
 
 time_activity_correction <-
   merged_data %>% mutate(
-    inicio_ms = as.integer(seconds(hms(hora_inicio))) + fecha_ms,
-    termino_ms = as.integer(seconds(hms(hora_termino))) + fecha_ms,
+    inicio_ms = as.numeric(seconds(hms(hora_inicio))) + fecha_ms,
+    termino_ms = as.numeric(seconds(hms(hora_termino))) + fecha_ms,
     valido = ifelse(
-      inicio_ms <= tiempo_fecha_ms &
-        tiempo_fecha_ms < termino_ms,
+      (inicio_ms <= tiempo_fecha_ms) & (tiempo_fecha_ms < termino_ms),
       "0",
       "1"
     )
