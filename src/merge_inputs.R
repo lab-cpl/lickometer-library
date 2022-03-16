@@ -17,7 +17,26 @@ merge_inputs <- function(metadata, data_directory){
 		print(error_check)
 	}
 	else{
+		# at this point all data should be in the correct format
+		# so we add date in posix_ms for time activity correction
+		# function
+		out %>%
+		drop_na() %>% # at this point na means that data does not have metadata
+		mutate(
+		       hora_inicio_ms = paste(fecha, hora_inicio, sep = " ") %>%
+					lubridate::ymd_hms() %>%
+					lubridate::seconds() %>%
+					as.numeric() * 1e3,
+		       hora_fin_ms = paste(fecha, hora_inicio, sep = " ") %>%
+					lubridate::ymd_hms() %>%
+					lubridate::seconds() %>%
+					as.numeric() * 1e3 
+		) -> out
 		print("Data merged!")
 		return(out)
 	}
 }
+
+# run test
+merge_inputs("../test/files/metadata_example.csv", "../test/files/") %>%
+	write_csv(., "../test/files/merged_example.csv")
