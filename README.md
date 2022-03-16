@@ -26,5 +26,9 @@ R library for cpl-lab lickometer
 | ml_consumidos | syringe ml levels |
 
 
+# TODO
+
+1. Add metadata columns (canulated yes/no, histological information)
+
 
 
