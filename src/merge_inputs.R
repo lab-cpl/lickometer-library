@@ -36,7 +36,3 @@ merge_inputs <- function(metadata, data_directory){
 		return(out)
 	}
 }
-
-# run test
-merge_inputs("../test/files/metadata_example.csv", "../test/files/") %>%
-	write_csv(., "../test/files/merged_example.csv")
