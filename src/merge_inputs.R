@@ -36,3 +36,17 @@ merge_inputs <- function(metadata, data_directory){
 		return(out)
 	}
 }
+
+merge_inputs("../test/files/metadata_example.csv", "../test/files/") -> tt
+
+uncumulate <- function(merged_input){
+         merged_input %>%
+                 group_by(ID, n_sesion, sensor) %>%
+                 mutate(
+                        evento_no_acumulado = c(0, diff(evento)) %>%
+				replace(. == 0, NA)
+                        ) %>%
+                 ungroup()
+}
+
+uncumulate(tt) %>% select(ID, sensor,  n_sesion, evento, evento_no_acumulado) %>% View()
