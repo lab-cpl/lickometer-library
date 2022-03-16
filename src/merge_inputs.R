@@ -27,7 +27,7 @@ merge_inputs <- function(metadata, data_directory){
 					lubridate::ymd_hms() %>%
 					lubridate::seconds() %>%
 					as.numeric() * 1e3,
-		       hora_fin_ms = paste(fecha, hora_inicio, sep = " ") %>%
+		       hora_fin_ms = paste(fecha, hora_fin, sep = " ") %>%
 					lubridate::ymd_hms() %>%
 					lubridate::seconds() %>%
 					as.numeric() * 1e3 
@@ -38,5 +38,17 @@ merge_inputs <- function(metadata, data_directory){
 }
 
 # run test
-merge_inputs("../test/files/metadata_example.csv", "../test/files/") %>%
-	write_csv(., "../test/files/merged_example.csv")
+merge_inputs("../test/files/metadata_example.csv", "../test/files/") -> kk
+
+# uncumulate
+uncumulate <- function(column){
+	if (!is.numeric(column)){
+		print("Error column must be cummulative numeric")
+		return(NA)
+	}
+	else{
+		print("Uncumulate done")
+	}
+}
+
+uncumulate(kk$evento)
