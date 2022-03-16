@@ -14,17 +14,13 @@ library(lubridate)
 
 # hora_inicio_ms <= tiempo_fecha_ms < hora_fin_ms + fecha_ms
 
-merged_data <-
-  data.frame(read.csv(
-    "~/GitHub/lickometer-library/test/files/merged_example.csv"
-  ))
 
-time_activity_correction <-
-  merged_data %>% mutate(
-    valido = ifelse(
-      (hora_inicio_ms <= tiempo_fecha_ms) & (tiempo_fecha_ms < hora_fin_ms),
-      "1",
-      "0"
-    )
-  )
+time_activity_correction <- function(merged_data) {
+  merged_data %>% mutate(valido = ifelse(
+    (hora_inicio_ms <= tiempo_fecha_ms) &
+      (tiempo_fecha_ms < hora_fin_ms),
+    "1",
+    "0"
+  ))
+}
 
