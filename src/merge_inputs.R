@@ -27,7 +27,7 @@ merge_inputs <- function(metadata, data_directory){
 					lubridate::ymd_hms() %>%
 					lubridate::seconds() %>%
 					as.numeric() * 1e3,
-		       hora_fin_ms = paste(fecha, hora_fin, sep = " ") %>%
+		       hora_fin_ms = paste(fecha, hora_termino, sep = " ") %>%
 					lubridate::ymd_hms() %>%
 					lubridate::seconds() %>%
 					as.numeric() * 1e3 
