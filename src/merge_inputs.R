@@ -1,9 +1,3 @@
-# merge inputs
-
-library(tidyverse)
-source("load_data.R")
-source("load_metadata.R")
-
 merge_inputs <- function(metadata, data_directory){
 	metadata <- load_metadata(
 				  read_csv(metadata)
@@ -36,38 +30,3 @@ merge_inputs <- function(metadata, data_directory){
 		return(out)
 	}
 }
-
-<<<<<<< HEAD
-# run test
-merge_inputs("../test/files/metadata_example.csv", "../test/files/") %>%
-	write_csv("../test/files/merged_example.csv")
-
-# uncumulate
-uncumulate <- function(column){
-	if (!is.numeric(column)){
-		print("Error column must be cummulative numeric")
-		return(NA)
-	}
-	else{
-		print("Uncumulate done")
-	}
-}
-
-uncumulate(kk$evento)
-=======
->>>>>>> uncumulate
-=======
-merge_inputs("../test/files/metadata_example.csv", "../test/files/") -> tt
-
-uncumulate <- function(merged_input){
-         merged_input %>%
-                 group_by(ID, n_sesion, sensor) %>%
-                 mutate(
-                        evento_no_acumulado = c(0, diff(evento)) %>%
-				replace(. == 0, NA)
-                        ) %>%
-                 ungroup()
-}
-
-uncumulate(tt) %>% select(ID, sensor,  n_sesion, evento, evento_no_acumulado) %>% View()
->>>>>>> uncumulate
