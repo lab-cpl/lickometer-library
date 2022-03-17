@@ -1,5 +1,5 @@
 source("load_data.R")
-
-# step 1 load data
-load_data("../test/files")
-# step 2 add metadata
+source("load_metadata.R")
+source("merge_inputs.R")
+source("time_activity_correction.R")
+source("uncumulate.R")
