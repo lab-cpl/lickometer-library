@@ -17,4 +17,3 @@ uncumulate() -> data_final
 # create a csv file to check for possible errors
 data_final %>%
 	write_csv("../test/files/merged_example.csv")
-
