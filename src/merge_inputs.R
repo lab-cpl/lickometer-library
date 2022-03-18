@@ -1,3 +1,4 @@
+#merge inputs
 merge_inputs <- function(metadata, data_directory){
 	metadata <- load_metadata(
 				  read_csv(metadata)

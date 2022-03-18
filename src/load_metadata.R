@@ -1,7 +1,4 @@
 # load metadata
-
-library(dplyr)
-
 load_metadata <- function(x){
 		x %>% mutate(
 		       n_sesion = as.factor(n_sesion),
