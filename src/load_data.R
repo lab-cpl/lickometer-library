@@ -5,8 +5,8 @@
 # checks for expected data types in each column
 # takes as parameters path and assumes extension is .csv
 
-library(tidyverse)
-library(validate)
+#library(tidyverse)
+#library(validate)
 
 # loads data in a directory
 # adds date and time columns

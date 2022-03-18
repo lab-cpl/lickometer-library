@@ -1,6 +1,6 @@
 # load metadata
 
-library(tidyverse)
+library(dplyr)
 
 load_metadata <- function(x){
 		x %>% mutate(
