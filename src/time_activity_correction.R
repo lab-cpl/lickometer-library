@@ -1,9 +1,4 @@
-# time_activity_correction
-# v 1 0 0
-
-library(tidyverse)
-library(dplyr)
-library(lubridate)
+# time activity correction
 
 # 1: import data from merged -csv
 # 2: add time of each activity to the starting time of the program

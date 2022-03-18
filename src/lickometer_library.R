@@ -1,3 +1,15 @@
+#libraries
+
+library(pacman)
+pacman::p_load()
+
+packs <- c("tidyr","tidyverse","dplyr","purrr","readr","lubridate","validate")
+success <- suppressWarnings(sapply(packs, require, character.only = TRUE))
+install.packages(names(success)[!success])
+sapply(names(success)[!success], require, character.only = TRUE)
+
+#lickometer_library
+
 source("load_data.R")
 source("load_metadata.R")
 source("merge_inputs.R")
