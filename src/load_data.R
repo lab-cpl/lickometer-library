@@ -1,17 +1,12 @@
-# load data
-
-# load files into list
-# loads files from a given folder into a list
-# checks for expected data types in each column
-# takes as parameters path and assumes extension is .csv
-
-# loads data in a directory
-# adds date and time columns
+# Main function
 load_data <- function(path){
 	load_data_as_char(path) %>%
 		validate_data()
 }
-# creates a column with date
+
+# source is the complete path with the filename that contains the date of
+# data collection, this function extracts such date and transforms it 
+# into the proper format
 source_to_date <- function(x) {
 	sub('\\..*$', '', basename(x)) %>%
 		lubridate::ymd_hms(.) -> tmp
@@ -24,19 +19,23 @@ source_to_date <- function(x) {
 			      )
 	return(out)
 }
+
+# same as source_to_date but keeps the whole format (with seconds)
 source_to_date_sec <- function(x) {
 	sub('\\..*$', '', basename(x)) %>%
 		lubridate::ymd_hms(.) -> out
 	return(out)
 }
-# creates a column with posix date in ms
+
+# sames as source_to_date but in posix epoch
 source_to_date_posix_ms <- function(x) {
 	sub('\\..*$', '', basename(x)) %>%
 		lubridate::ymd_hms(.) %>%
 		lubridate::seconds(.) %>%
 		as.numeric() * 1e3
 }
-# formats data type
+
+# correct data type for all relevant variables
 format_data_type <- function(raw_file){
 			raw_file %>%
 				mutate(
@@ -52,6 +51,8 @@ format_data_type <- function(raw_file){
 				        tiempo_fecha = source_to_date_sec(source) + lubridate::seconds(tiempo / 1000)
 	       )
 }
+
+# loading data as char allows us to validate data
 load_data_as_char <- function(path){
 	list.files(
 		   path = path,
@@ -63,6 +64,8 @@ load_data_as_char <- function(path){
 			  read_csv, .id = "source", col_types = cols(.default = "c")
 			  )
 }
+
+# data validation
 validate_data <- function(data_as_char){
 	rules <- validate::validator(
 				     field_format(ID, "^[0-9]+$", type = "regex"),
