@@ -86,5 +86,3 @@ validate_data <- function(data_as_char){
 	}
 	return(NA)
 }
-
-load_data("../test/files") -> aa

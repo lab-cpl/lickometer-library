@@ -1,5 +1,3 @@
-read_csv("../test/files/merged_example.csv") -> dd
-
 bin_calculation <- function(merged_data, bin_size_ms){
 	merged_data %>%
 		group_by(
