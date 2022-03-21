@@ -15,7 +15,7 @@ source("load_metadata.R")
 source("merge_inputs.R")
 source("time_activity_correction.R")
 source("uncumulate.R")
-source("bin_calculation")
+source("bin_calculation.R")
 
 # merge data and metadata
 merge_inputs(
