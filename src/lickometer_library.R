@@ -15,6 +15,7 @@ source("load_metadata.R")
 source("merge_inputs.R")
 source("time_activity_correction.R")
 source("uncumulate.R")
+source("interval_estimate.R")
 
 # merge data and metadata
 merge_inputs(
@@ -24,7 +25,9 @@ merge_inputs(
 # creates a column with valid and invalid data 1: valid
 time_activity_correction() %>%
 # binary form of events
-uncumulate() -> data_final
+uncumulate() %>%
+interval_estimate() -> data_final
+
 
 # create a csv file to check for possible errors
 data_final %>%
