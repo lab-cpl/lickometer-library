@@ -1,12 +1,12 @@
 #libraries
-pacman::p_load(
-	       "tidyr",
-	       "tidyverse",
-	       "purrr",
-	       "readr",
-	       "validate",
-	       "lubridate"
-	       )
+
+library(pacman)
+pacman::p_load()
+
+packs <- c("tidyr","tidyverse","dplyr","purrr","readr","lubridate","validate")
+success <- suppressWarnings(sapply(packs, require, character.only = TRUE))
+install.packages(names(success)[!success])
+sapply(names(success)[!success], require, character.only = TRUE)
 
 #lickometer_library
 
@@ -15,7 +15,7 @@ source("load_metadata.R")
 source("merge_inputs.R")
 source("time_activity_correction.R")
 source("uncumulate.R")
-source("bin_calculation.R")
+source("interval_estimate.R")
 
 # merge data and metadata
 merge_inputs(
@@ -26,8 +26,8 @@ merge_inputs(
 time_activity_correction() %>%
 # binary form of events
 uncumulate() %>%
-# example bin creation
-bin_calculation(., 600000) -> data_final
+interval_estimate() -> data_final
+
 
 # create a csv file to check for possible errors
 data_final %>%
