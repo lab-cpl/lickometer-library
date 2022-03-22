@@ -1,12 +1,7 @@
 #libraries
 
-library(pacman)
-pacman::p_load()
-
 packs <- c("tidyr","tidyverse","dplyr","purrr","readr","lubridate","validate")
-success <- suppressWarnings(sapply(packs, require, character.only = TRUE))
-install.packages(names(success)[!success])
-sapply(names(success)[!success], require, character.only = TRUE)
+pacman::p_load(packs)
 
 #lickometer_library
 
