@@ -24,6 +24,13 @@ R library for cpl-lab lickometer
 | licks inicio/fin | researcher notes on number of licks at the start of end of experiment |
 | eventos inicio/fin | sames as above but for events |
 | ml_consumidos | syringe ml levels |
+| hora_inicio_ms | start of session in posix epoch |
+| hora_fin_ms | end of session in posix epoch |
+| valido | whether the event happened during the session (0) or not (1) |
+| evento_no_acumulado | uncumulated events |
+| actividad_no_acumulada | uncumulated activity |
+| interval_estimate | time between events, grouped by ID, date and n_licometro |
+
 
 
 # TODO
