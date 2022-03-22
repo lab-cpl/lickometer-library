@@ -1,7 +1,6 @@
 #libraries
 
-packs <- c("tidyr","tidyverse","dplyr","purrr","readr","lubridate","validate")
-pacman::p_load(packs)
+pacman::p_load(tidyr,tidyverse,dplyr,purrr,readr,lubridate,validate,ggplot2)
 
 #lickometer_library
 
@@ -11,6 +10,7 @@ source("merge_inputs.R")
 source("time_activity_correction.R")
 source("uncumulate.R")
 source("interval_estimate.R")
+source("bin_calculation.R")
 
 # merge data and metadata
 merge_inputs(
@@ -21,9 +21,15 @@ merge_inputs(
 time_activity_correction() %>%
 # binary form of events
 uncumulate() %>%
-interval_estimate() -> data_final
+interval_estimate() %>%
+bin_calculation(., 600000) -> data_final
 
 
 # create a csv file to check for possible errors
 data_final %>%
 	write_csv("../test/files/merged_example.csv")
+
+# ILI histogram
+data_final %>%
+	ggplot(aes(interval_estimate)) +
+	geom_histogram()
