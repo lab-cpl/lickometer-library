@@ -29,6 +29,7 @@ R library for cpl-lab lickometer
 | valido | whether the event happened during the session (0) or not (1) |
 | evento_no_acumulado | uncumulated events |
 | actividad_no_acumulada | uncumulated activity |
+| tipo_recompensa | licks is sucrose or water |
 | interval_estimate | time between events, grouped by ID, date and n_licometro |
 
 # Lick-microstructure parameters
