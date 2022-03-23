@@ -31,5 +31,8 @@ data_final %>%
 
 # ILI histogram
 data_final %>%
+  filter(interval_estimate <= 1000) -> plot_data
+
+plot_data %>%
 	ggplot(aes(interval_estimate)) +
 	geom_histogram()

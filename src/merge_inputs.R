@@ -25,7 +25,8 @@ merge_inputs <- function(metadata, data_directory){
 		       hora_fin_ms = paste(fecha, hora_termino, sep = " ") %>%
 					lubridate::ymd_hms() %>%
 					lubridate::seconds() %>%
-					as.numeric() * 1e3 
+					as.numeric() * 1e3,
+					tipo_recompensa = if_else(sensor == 0, estimulo_spout_1, estimulo_spout_2)
 		) -> out
 		print("Data merged!")
 		return(out)
