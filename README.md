@@ -31,6 +31,16 @@ R library for cpl-lab lickometer
 | actividad_no_acumulada | uncumulated activity |
 | interval_estimate | time between events, grouped by ID, date and n_licometro |
 
+# Lick-microstructure parameters
+
+- Interlick-intervals (ILI) reflects termination of licking episode @1000ms (Johnson, et al., 2010)
+
+| variable_name         | definition                           | interpretation                     |
+| ---                   | ---                                  | ---                                |
+| cluster_size          | number of licks within a cluster     | hedonic evaluation of the solution |
+| intercluster_interval | pauses in ms between clusters        |                                    |
+| cluster_number        | number of clusters within a session  | gastrointestinal inhibition        |
+| cluster_pdf           | cluster probability density function |                                    |
 
 
 # TODO
