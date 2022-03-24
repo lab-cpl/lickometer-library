@@ -11,6 +11,7 @@ source("time_activity_correction.R")
 source("uncumulate.R")
 source("interval_estimate.R")
 source("bin_calculation.R")
+source("cluster_size.R")
 
 # merge data and metadata
 merge_inputs(
@@ -22,7 +23,8 @@ time_activity_correction() %>%
 # binary form of events
 uncumulate() %>%
 interval_estimate() %>%
-bin_calculation(., 600000) -> data_final
+bin_calculation(., 600000) %>%
+cluster_size() -> data_final
 
 
 # create a csv file to check for possible errors
