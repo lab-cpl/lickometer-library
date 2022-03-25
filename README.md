@@ -31,6 +31,10 @@ R library for cpl-lab lickometer
 | actividad_no_acumulada | uncumulated activity |
 | tipo_recompensa | licks is sucrose or water |
 | interval_estimate | time between events, grouped by ID, date and n_licometro |
+| cluster_bool | indicates licks inside a cluster |
+| valid_cluster | indicates if cluster if valid or not |
+| n_clusters | unique id assigned to each cluster |
+| cluster_size | number of licks within a cluster |
 
 # Lick-microstructure parameters
 
@@ -41,12 +45,12 @@ R library for cpl-lab lickometer
 | cluster_size          | number of licks within a cluster     | hedonic evaluation of the solution |
 | intercluster_interval | pauses in ms between clusters        |                                    |
 | cluster_number        | number of clusters within a session  | gastrointestinal inhibition        |
-| cluster_pdf           | cluster probability density function |                                    |
 
 
 # TODO
 
 1. Add metadata columns (canulated yes/no, histological information)
+2. Function documentation
 
 
 
