@@ -1,7 +1,3 @@
-library(tidyverse)
-
-data<- read_csv("../test/files/merged_example.csv")
-
 make_groups <- function(x){
   counter = 0
   out = c(0)
@@ -22,10 +18,16 @@ make_groups <- function(x){
 
 n_clusters <- function(merged_input){
 	merged_input %>%
-		mutate(cluster_bool = cluster_bool %>%
-		       as.factor() %>%
-		       as.numeric()
-	       )
+		group_by(ID, sensor, n_sesion) %>%
+		mutate(
+			tmp_bool = as.numeric(as.factor(cluster_bool)) %>% replace_na(0),
+			n_clusters = make_groups(tmp_bool)
+		) %>%
+		select(-tmp_bool) -> out
+	out %>%
+		group_by(ID, sensor, n_sesion, n_clusters) %>%
+		summarise(cluster_size = n()) %>%
+		left_join(out) %>%
+		ungroup() -> out
+	return(out)
 }
-
-n_clusters(data) %>% select(cluster_bool) %>% max()
