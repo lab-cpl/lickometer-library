@@ -40,5 +40,5 @@ pause_ms <- function(merged_data) {
 #   )
 # 
 
-merged_data <- data_final 
-view(pause_ms(merged_data))
+# merged_data <- data_final 
+# view(pause_ms(merged_data))

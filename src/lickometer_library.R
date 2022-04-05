@@ -28,7 +28,7 @@ interval_estimate() %>%
 bin_calculation(., 600000) %>%
 detect_bursts(., 1000) %>%
 n_clusters() %>%
-pause_ms()-> data_final
+pause_ms() -> data_final
 
 
 # create a csv file to check for possible errors
