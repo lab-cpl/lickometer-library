@@ -13,6 +13,7 @@ source("interval_estimate.R")
 source("bin_calculation.R")
 source("burst_estimates.R")
 source("n_clusters.R")
+source("pause_ms.R")
 
 # merge data and metadata
 merge_inputs(
@@ -26,7 +27,8 @@ uncumulate() %>%
 interval_estimate() %>%
 bin_calculation(., 600000) %>%
 detect_bursts(., 1000) %>%
-n_clusters() -> data_final
+n_clusters() %>%
+pause_ms() -> data_final
 
 
 # create a csv file to check for possible errors
