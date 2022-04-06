@@ -7,22 +7,22 @@ library(tidyverse)
 # 3. sacarose bias over time
 
 ## ILI ###
-ILI <- function(){
-	return(rnorm(1, 130, 20))
+ILI <- function(mu){
+	return(rnorm(1, mu, 20))
 }
 ## idle time
-idle_time <- function(){
-	return(rnorm(1, 10000, 20))
+idle_time <- function(time_){
+	return(rnorm(1, time_, 20))
 }
 ## pick from vector at random
-behavior <- function(){
-	probs <- c(0.3, 0.6, 0.1)
-	return(sample(c("water", "sucrose", "idle"), 1, replace = TRUE, prob = probs))
+behavior <- function(probs){
+	p <- probs
+	return(sample(c("water", "sucrose", "idle"), 1, replace = TRUE, prob = p))
 }
 
 ## FR ##
 # if trigerred five times a reward is produced
-spouts <- function(){
+simulate_session <- function(){
 	est <- c()
 	intervals <- c()
 	licks_suc <- c()
@@ -34,7 +34,13 @@ spouts <- function(){
 	timeout_suc <- 0
 	timeout_wat <- 0
 	total_time <- 0
-	list(events = function(spout, ILI, idle_time) {
+	out <- tibble()
+	list(play = function(spout, ILI, idle_time, ID, iterations) {
+		     if (spout == "idle"){
+			     ILI <- idle_time
+			     spout <- sample(c("water", "sucrose"), 1, replace = TRUE, prob = c(0.5, 0.5))
+		     }
+		     for (i in 1:iterations){
 		     total_time <<- total_time + ILI
 		     if(spout == "sucrose"){
 			     timeout_suc <<- timeout_suc - ILI
@@ -80,23 +86,13 @@ spouts <- function(){
 				     event_wat <<- append(event_wat, 0)
 			     }
 		     }
-		     else if (spout == "idle"){
-			     if (length(est) == 0){
-				     # idle time
-				     timeout_suc <<- timeout_suc - idle_time
-				     timeout_wat <<- timeout_wat - idle_time
-				     return(NA)
-			     }
-			     else{
-				     # idle time
-				     timeout_suc <<- timeout_suc - idle_time
-				     timeout_wat <<- timeout_wat - idle_time
-			     }
-		     }
+		     if (i == iterations){
 		     return(
 			    tibble(
-				   est = est,
-				   intervals = intervals,
+				   ID = ID,
+				   sensor = as.numeric(as.factor(est)) - 1,
+				   total_time = total_time,
+				   tiempo = intervals %>% cumsum,
 				   licks_suc = licks_suc %>% cumsum,
 				   licks_wat = licks_wat %>% cumsum,
 				   event_suc = event_suc %>% cumsum,
@@ -107,23 +103,51 @@ spouts <- function(){
 				   licks_suc = replace(licks_suc, lag(licks_suc) == licks_suc, 0),
 				   event_wat = replace(event_wat, lag(event_wat) == event_wat, 0),
 				   event_suc = replace(event_suc, lag(event_suc) == event_suc, 0),
-				   licks = licks_wat + licks_suc,
-				   events = event_suc + event_wat,
+				   actividad = licks_wat + licks_suc,
+				   evento = event_suc + event_wat,
+				   exito = event_suc + event_wat,
 				   timeout_wat = timeout_wat,
-				   timeout_suc = timeout_suc,
-				   total_time = total_time
+				   timeout_suc = timeout_suc
 				   ) %>%
 			    select(
 				   -licks_wat, -licks_suc,
 				   -event_suc, -event_wat,
-			    	   -timeout_wat, -timeout_suc
+			    	   -timeout_wat, -timeout_suc,
+				   -total_time,
+				   ID,
+				   sensor,
+				   actividad,
+				   evento,
+				   exito
 			    )
-			    )
-})
+			    )}
+}})
 }
 
-sp <- spouts()
-sp$events(behavior(), ILI(), idle_time())
 
+# simulation parameters
+n_sims <- 2000
+n_mice <- 10
+mice <- seq(1, n_mice, 1)
+lick_speed <- rnorm(n_mice, 125, 20) %>% abs
+idle_ <- rnorm(n_mice, 10000, 20) %>% abs
+probs <- c(0.4, 0.5, 0.1) # water/sucrose/idle
+# run simulation
+list(mice, lick_speed, idle_) %>%
+	pmap_dfr(., function(m, l, i){
+		    # for each mice a session is simulated
+		    sim <- simulate_session()
+		    sim$play(
+		       behavior(probs),
+		       ILI(l),
+		       idle_time(i),
+		       m,
+		       n_sims
+		       ) -> out
+		    return(out)
+}
+	) -> simulation_results
 
+simulation_results %>%
+	write_csv("../test/files/simulation.csv")
 
