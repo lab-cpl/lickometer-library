@@ -67,25 +67,26 @@ load_data_as_char <- function(path){
 
 # data validation
 validate_data <- function(data_as_char){
-	rules <- validate::validator(
-				     field_format(ID, "^[0-9]+$", type = "regex"),
-				     field_format(sensor, "^[0-9]$", type = "regex"),
-				     field_format(tiempo, "^[0-9]+$", type = "regex"),
-				     field_format(actividad, "^[0-9]+$", type = "regex"),
-				     field_format(evento, "^[0-9]+$", type = "regex"),
-				     field_format(exito, "^[0-9]+$", type = "regex")
-				     )
-	format_errors <- confront(data_as_char, rules)$._value %>%
-		as_tibble()
-	error_matrix <- which(!as.matrix(format_errors), arr.ind = TRUE)
-	if (length(error_matrix) == 0){
-		message("Data contains no format errors")
-		return(format_data_type(data_as_char))
-	}
-	else{
-		message("Format errors found in the following rows and columns")
-		print(error_matrix)
-		return(error_matrix)
-	}
-	return(NA)
+#	rules <- validate::validator(
+#				     field_format(ID, "^[0-9]+$", type = "regex"),
+#				     field_format(sensor, "^[0-9]$", type = "regex"),
+#				     field_format(tiempo, "^[0-9]+$", type = "regex"),
+#				     field_format(actividad, "^[0-9]+$", type = "regex"),
+#				     field_format(evento, "^[0-9]+$", type = "regex"),
+#				     field_format(exito, "^[0-9]+$", type = "regex")
+#				     )
+#	format_errors <- confront(data_as_char, rules)$._value %>%
+#		as_tibble()
+#	error_matrix <- which(!as.matrix(format_errors), arr.ind = TRUE)
+#	if (length(error_matrix) == 0){
+#		message("Data contains no format errors")
+#		return(format_data_type(data_as_char))
+#	}
+#	else{
+#		message("Format errors found in the following rows and columns")
+#		print(error_matrix)
+#		return(error_matrix)
+#	}
+#	return(NA)
+	return(format_data_type(data_as_char))
 }

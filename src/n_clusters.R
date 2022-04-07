@@ -23,11 +23,12 @@ n_clusters <- function(merged_input){
 			tmp_bool = as.numeric(as.factor(cluster_bool)) %>% replace_na(0),
 			n_clusters = make_groups(tmp_bool)
 		) %>%
-		select(-tmp_bool) -> out
+		select(-tmp_bool) %>%
+		ungroup() -> out
 	out %>%
 		group_by(ID, sensor, n_sesion, n_clusters) %>%
 		summarise(cluster_size = n()) %>%
 		left_join(out) %>%
-		ungroup() -> out
+		ungroup() -> outt
 	return(out)
 }

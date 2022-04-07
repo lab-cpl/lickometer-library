@@ -61,5 +61,5 @@ ds %>%
 				}
 				)
 		    }) -> out
-	bind_rows(out) %>% unnest(rn)
+	return(bind_rows(out))
 }

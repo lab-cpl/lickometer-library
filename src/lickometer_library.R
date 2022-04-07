@@ -23,7 +23,7 @@ source("synch_lick_event.R")
 
 # merge data and metadata
 merge_inputs(
-	     "../test/files/metadata_example.csv",
+	     "../test/files/metadata_simulation.csv",
 	     "../test/files"
 	     ) %>%
 # creates a column with valid and invalid data 1: valid
@@ -31,10 +31,28 @@ time_activity_correction() %>%
 # binary form of events
 uncumulate() %>%
 interval_estimate() %>%
-bin_calculation(., 600000) %>%
+bin_calculation(., 60000) %>%
 detect_bursts(., 1000) %>%
 n_clusters() %>%
 pause_ms() -> data_final
+
+data_final %>%
+	mutate(rn = row_number()) -> a
+
+a %>%
+	group_split(
+		    ID,
+		    n_sesion,
+		    sensor
+		    ) %>%
+map(., function(x){
+	    x %>% filter(evento_no_acumulado == 1) %>%
+		    select(rn) -> event_indices
+	    x %>% select(rn) -> row_index
+	    event_indices %>%
+		    map(., function(event_index){
+				print(event_index)
+})}) %>% head
 
 # peri-event
 data_final %>%
@@ -44,8 +62,11 @@ data_final %>%
 peri_event %>%
 	mutate(
 	       estimulo = if_else(sensor == 0 & estimulo_spout_1 == "sacarosa", "sacarosa", "agua")
-	       ) %>%
-	filter(interval_estimate > 100, interval_estimate <= 1000, estimulo == "sacarosa") %>%
+	       ) -> a
+
+
+%>%
+	filter(estimulo == "sacarosa") %>%
 	ggplot(
 	       aes(
 		   tiempo_peri_evento,
