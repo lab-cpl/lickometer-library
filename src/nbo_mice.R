@@ -7,9 +7,20 @@ library(tidyverse)
 # 3. sacarose bias over time
 
 ## ILI ###
-ILI <- function(mu){
-	idle <- sample(c(0, rnorm(1, 10000, 1)), 1, replace = TRUE, prob = c(0.9, 0.1))
-	return((rnorm(1, mu, 20) + idle) %>% round)
+ILI <- function(mu, decay){
+	idle <- sample(c(0, rnorm(1, 10000, 1)), 1, replace = TRUE, prob = c(0.7, 0.3))
+	return((rnorm(1, mu, 1) + idle) %>% round)
+}
+## SOFT MAX ##
+softmax <- function(par){
+  n.par <- length(par)
+  par1 <- sort(par, decreasing = TRUE)
+  Lk <- par1[1]
+  for (k in 1:(n.par-1)) {
+    Lk <- max(par1[k+1], Lk) + log1p(exp(-abs(par1[k+1] - Lk))) 
+  }
+  val <- exp(par - Lk)
+  return(val)
 }
 ## idle time
 idle_time <- function(time_){
@@ -37,7 +48,7 @@ simulate_session <- function(){
 	out <- tibble()
 	list(play = function(spout, lick_speed, ID, iterations) {
 		     for (i in 1:iterations){
-		     ILI <- ILI(lick_speed)
+		     ILI <- ILI(lick_speed, i)
 		     total_time <<- total_time + ILI
 		     spout <- behavior(probs)
 		     if(spout == "sucrose"){
@@ -130,10 +141,10 @@ simulate_session <- function(){
 
 
 # simulation parameters
-n_sims <- 2000
-n_mice <- 10
+n_sims <- 5000
+n_mice <- 4
 mice <- seq(1, n_mice, 1)
-lick_speed <- rnorm(n_mice, 125, 20) %>% abs
+lick_speed <- rnorm(n_mice, 125, 1) %>% abs
 probs <- c(0.1, 0.9) # water/sucrose
 # run simulation
 list(mice, lick_speed) %>%
