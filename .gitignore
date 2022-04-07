@@ -1,3 +1,4 @@
 .~lock.*
 .Rhistory
 src/.RData
+test/files/*.csv
