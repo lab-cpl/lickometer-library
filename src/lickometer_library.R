@@ -36,56 +36,9 @@ detect_bursts(., 1000) %>%
 n_clusters() %>%
 pause_ms() -> data_final
 
-data_final %>%
-	mutate(rn = row_number()) -> a
-
-a %>%
-	group_split(
-		    ID,
-		    n_sesion,
-		    sensor
-		    ) %>%
-map(., function(x){
-	    x %>% filter(evento_no_acumulado == 1) %>%
-		    select(rn) -> event_indices
-	    x %>% select(rn) -> row_index
-	    event_indices %>%
-		    map(., function(event_index){
-				print(event_index)
-})}) %>% head
-
 # peri-event
 data_final %>%
 	synch_lick_event() -> peri_event
 
-# peri-event interval_estimate
 peri_event %>%
-	mutate(
-	       estimulo = if_else(sensor == 0 & estimulo_spout_1 == "sacarosa", "sacarosa", "agua")
-	       ) -> a
-
-
-%>%
-	filter(estimulo == "sacarosa") %>%
-	ggplot(
-	       aes(
-		   tiempo_peri_evento,
-		   interval_estimate
-		   )
-	       ) +
-	facet_grid(evento~estimulo) +
-	theme_bw()
-
-
-
-# create a csv file to check for possible errors
-data_final %>%
-	write_csv("../test/files/merged_example.csv")
-
-# ILI histogram
-data_final %>%
-  filter(interval_estimate <= 1000) -> plot_data
-
-plot_data %>%
-	ggplot(aes(interval_estimate)) +
-	geom_histogram()
+	unnest(rn) -> out

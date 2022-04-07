@@ -92,7 +92,7 @@ simulate_session <- function(){
 		     return(
 			    tibble(
 				   ID = ID,
-				   sensor = as.numeric(as.factor(est)) - 1,
+				   sensor = as.factor(est),
 				   total_time = total_time,
 				   tiempo = intervals %>% cumsum,
 				   licks_suc = licks_suc %>% cumsum,
@@ -134,9 +134,9 @@ n_sims <- 2000
 n_mice <- 10
 mice <- seq(1, n_mice, 1)
 lick_speed <- rnorm(n_mice, 125, 20) %>% abs
-probs <- c(0.3, 0.7) # water/sucrose
+probs <- c(0.1, 0.9) # water/sucrose
 # run simulation
-list(mice, lick_speed, idle_) %>%
+list(mice, lick_speed) %>%
 	pmap_dfr(., function(m, l, i){
 		    # for each mice a session is simulated
 		    sim <- simulate_session()
@@ -152,4 +152,3 @@ list(mice, lick_speed, idle_) %>%
 
 simulation_results %>%
 	write_csv("../test/files/20220101_120000.csv")
-
