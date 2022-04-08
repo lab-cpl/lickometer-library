@@ -1,71 +1,3 @@
-pacman::p_load(tidyr,
-	       tidyverse,
-	       dplyr,
-	       purrr,
-	       readr,
-	       lubridate,
-	       validate,
-	       ggplot2)
-
-source("load_data.R")
-source("load_metadata.R")
-source("merge_inputs.R")
-source("time_activity_correction.R")
-source("uncumulate.R")
-source("interval_estimate.R")
-source("bin_calculation.R")
-source("burst_estimates.R")
-source("n_clusters.R")
-
-
-merge_inputs(
-             "../test/files/metadata_example.csv",
-             "../test/files"
-             ) %>%
-# creates a column with valid and invalid data 1: valid
-time_activity_correction() %>%
-# binary form of events
-uncumulate() %>%
-interval_estimate() %>%
-bin_calculation(., 600000) %>%
-detect_bursts(., 1000) %>%
-n_clusters() -> data_final
-
-data_final %>%
-	mutate(rn = row_number()) %>%
-	group_split(
-		    ID,
-		    n_sesion,
-		    sensor
-		    ) %>%
-	map_dfr(., function(x){
-			x %>%
-				filter(evento_no_acumulado == 1) %>%
-				select(rn) -> event_indices
-			x %>%
-			select(rn) -> row_index
-			       tibble(
-				      init = lag(unlist(event_indices), default = min(row_index)),
-				      end_ = lead(unlist(event_indices), default = max(row_index))
-				      ) -> t
-			return(t)
-}) -> aa
-
-
-b <- data_final %>% mutate(rn = row_number())
-
-	as.list(as.data.frame(t(aa))) %>%
-		map_dfr(., function(a){
-			     slice(b, a[1]:a[2])
-}) -> xx
-
-a <- tibble(a = c(1, 2, 3), b = c(5, 6, 7))
-r <- tibble(x = c(1, 2, 3, 4, 5, 6, 7))
-
-slice(r, 1:4)
-
-						r <- slice(row_index, start_:end_)
-
 synch_lick_event <- function(ds){
 	ds <- ds %>% mutate(rn = row_number())
 ds %>%
@@ -129,5 +61,5 @@ ds %>%
 				}
 				)
 		    }) -> out
-	bind_rows(out) %>% unnest(rn)
+	return(bind_rows(out))
 }
