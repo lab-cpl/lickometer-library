@@ -10,6 +10,7 @@ merge_inputs <- function(metadata, data_directory){
 	if(length(error_check) != 0){
 		print("Possible errors in cols...")
 		print(error_check)
+		return(out)
 	}
 	else{
 		# at this point all data should be in the correct format
