@@ -87,6 +87,9 @@ validate_data <- function(data_as_char){
 #		print(error_matrix)
 #		return(error_matrix)
 #	}
+<<<<<<< HEAD
 #	return(NA)
+=======
+>>>>>>> nbo_mice.R
 	return(format_data_type(data_as_char))
 }

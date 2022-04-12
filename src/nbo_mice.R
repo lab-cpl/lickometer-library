@@ -1,11 +1,56 @@
 library(tidyverse)
 
-# relevant parameters
+## DATA SIM ##
 
-# 1. interlick intervals = N(130, 20)
-# 2. FR 5
-# 3. sacarose bias over time
+# create fake ILI's
+data_sim_lic <- function(nrows, events_per_min, animal){
+	events_per_min <- 60000 / events_per_min
+	idle_time <- sample(c(rnorm(1, 20000, 1), 0),
+			    nrows,
+			    prob = c(0.2, 0.8),
+			    replace = TRUE)
+	ili_ds <- tibble(ILI = rnorm(nrows, 100, 1))
+	event_ds <- ili_ds %>%
+		mutate(
+		       ILI = round(ILI + idle_time),
+		       tiempo = cumsum(ILI),
+		       event_time = trunc(tiempo / events_per_min) - lag(trunc(tiempo / events_per_min)),
+		       sensor = sample(c(0, 1), nrows, prob = c(0.9, 0.1), replace = TRUE),
+		       a_sac = cumsum(sensor == 1),
+		       a_wat = cumsum(sensor == 0),
+		       actividad = if_else(sensor == 1, a_sac, a_wat),
+		       e_sac = cumsum(replace_na(sensor == 1 & event_time == 1, 0)),
+		       e_wat = cumsum(replace_na(sensor == 0 & event_time == 1, 0)),
+		       evento = if_else(sensor == 1, e_sac, e_wat),
+		       ID = animal,
+		       exito = 1
+		       )
+	return(event_ds %>%
+	       fill(sensor, .direction = "up") %>%
+	select(
+	       ID,
+	       sensor,
+	       tiempo,
+	       actividad,
+	       evento,
+	       exito,
+	       event_time
+	       ))
+}
 
+# simulate
+params <- list(c(800, 800), c(1, 2), c(1, 2))
+params %>%
+	pmap_dfr(
+	     function(x, y, z) data_sim_lic(x, y, z)
+	     ) -> sim
+write_csv(sim, "../test/files/20221104_130000.csv")
+
+
+
+## DATA SIM ##
+
+## MICE SIM ###
 ## ILI ###
 ILI <- function(mu, decay){
 	idle <- sample(c(0, rnorm(1, 10000, 1)), 1, replace = TRUE, prob = c(0.7, 0.3))
