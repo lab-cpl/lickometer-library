@@ -1,7 +1,7 @@
 #merge inputs
 merge_inputs <- function(metadata, data_directory){
 	metadata <- load_metadata(
-				  read_csv(metadata)
+				  read_csv(metadata, col_types = cols(.default = "c"))
 				  )
 	data_file <- load_data(data_directory)
 	data_file %>%

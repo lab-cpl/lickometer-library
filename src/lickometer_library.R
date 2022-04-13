@@ -6,7 +6,7 @@ pacman::p_load(tidyr,
 	       readr,
 	       lubridate,
 	       validate,
-	       ggplot2)
+	       pointblank)
 
 #lickometer_library
 source("load_data.R")
