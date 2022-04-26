@@ -47,8 +47,8 @@ load_metadata <- function(x){
 		patterns <- c(
 			      "[0-9]", # n_sesion
 			      "[0-9]{4} [0-9]{2} [0-9]{2}", # fecha
-			      "[a-z]", # droga
-			      "[0-9]", # dosis
+			      "[a-z]+_[a-z]+_[a-z]+_[a-z]+", # droga droga1_droga2_metodo_area
+			      "[0-9]", # dosis dosis1_dosis2_unidad de medida
 			      "[0-9]", # ID
 			      "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_inicio
 			      "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_termino
