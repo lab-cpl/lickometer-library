@@ -1,0 +1,622 @@
+---
+title: "Lickometer library"
+output: html_notebook
+---
+
+# libs
+
+```{r}
+pacman::p_load(
+         tidyr,
+	       tidyverse,
+	       dplyr,
+	       purrr,
+	       readr,
+	       lubridate,
+	       validate,
+	       pointblank,
+         furrr
+	       )
+```
+
+# [1.0] load_data
+
+Data is loaded from single folder containing all relevant files
+
+```{r}
+# Main function
+load_data <- function(path){
+	load_data_as_char(path) %>% 
+  format_data_type(.)
+}
+
+# loading data as char allows us to validate data against regex pattern
+load_data_as_char <- function(path){
+	list.files(
+		   path = path,
+		   pattern = "_[0-9]+\\.csv",
+		   full.names = T
+		   ) %>%
+	set_names() %>%
+	purrr::map_dfr(
+			  read_csv, .id = "source", col_types = cols(.default = "c")
+			  )
+}
+
+# correct data type for all relevant variables
+format_data_type <- function(raw_file){
+			raw_file %>%
+				mutate(
+					ID = as.factor(ID),
+					sensor = as.factor(sensor),
+					tiempo = as.numeric(tiempo),
+					actividad = as.numeric(actividad),
+					evento = as.numeric(evento),
+					exito = as.factor(exito),
+				  fecha = source_to_date(source),
+				  fecha_ms = source_to_date_posix_ms(source),
+				  tiempo_fecha_ms = fecha_ms + tiempo,
+				  tiempo_fecha = source_to_date_sec(source) + lubridate::seconds(tiempo / 1000)
+	       )
+}
+
+# source is the complete path with the filename that contains the date of
+# data collection, this function extracts such date and transforms it 
+# into the proper format
+source_to_date <- function(x) {
+	sub('\\..*$', '', basename(x)) %>%
+		lubridate::ymd_hms(.) -> tmp
+	out <- lubridate::ymd(
+			      paste(
+				    lubridate::year(tmp),
+				    lubridate::month(tmp),
+				    lubridate::day(tmp)
+				    )
+			      )
+	return(out)
+}
+
+# same as source_to_date but keeps the whole format (with seconds)
+source_to_date_sec <- function(x) {
+	sub('\\..*$', '', basename(x)) %>%
+		lubridate::ymd_hms(.) -> out
+	return(out)
+}
+
+# sames as source_to_date but in posix epoch
+source_to_date_posix_ms <- function(x) {
+	sub('\\..*$', '', basename(x)) %>%
+		lubridate::ymd_hms(.) %>%
+		lubridate::seconds(.) %>%
+		as.numeric() * 1e3
+}
+```
+
+# [1.1] test load data
+
+```{r}
+path <- "../test/files"
+test_data <- load_data(path)
+```
+
+# [2.0] load_metadata
+
+```{r}
+# mutate metadata into the proper format
+# if coerce fails "NA" comes out
+load_metadata <- function(x){
+		x %>% mutate(
+		       n_sesion = as.factor(n_sesion),
+		       fecha = lubridate::ymd(fecha),
+		       droga = as.character(droga),
+		       dosis = as.character(dosis),
+		       ID = as.factor(ID),
+		       hora_inicio = lubridate::hms(hora_inicio),
+		       hora_termino = lubridate::hms(hora_termino),
+		       n_licometro = as.factor(n_licometro),
+		       estimulo_spout_1 = as.character(estimulo_spout_1),
+		       estimulo_spout_2 = as.character(estimulo_spout_2),
+		       licks_inicio_spout_1 = as.numeric(licks_inicio_spout_1),
+		       licks_inicio_spout_2 = as.numeric(licks_inicio_spout_2),
+		       licks_fin_spout_1 = as.numeric(licks_fin_spout_1),
+		       licks_fin_spout_2 = as.numeric(licks_fin_spout_2),
+		       eventos_inicio_spout_1 = as.numeric(eventos_inicio_spout_1),
+		       eventos_inicio_spout_2 = as.numeric(eventos_inicio_spout_2),
+		       eventos_fin_spout_1 = as.numeric(eventos_fin_spout_1),
+		       eventos_fin_spout_2 = as.numeric(eventos_fin_spout_2),
+		       ml_consumidos_spout_1 = as.numeric(ml_consumidos_spout_1),
+		       ml_consumidos_spout_2 = as.numeric(ml_consumidos_spout_2)
+		       ) -> out
+  # this should be the col names
+		val_names(x, c(
+			       "n_sesion",
+			       "fecha",
+			       "droga",
+			       "dosis",
+			       "ID",
+			       "hora_inicio",
+			       "hora_termino",
+			       "n_licometro",
+			       "estimulo_spout_1",
+			       "estimulo_spout_2",
+			       "licks_inicio_spout_1",
+			       "licks_inicio_spout_2",
+			       "licks_fin_spout_1",
+			       "licks_fin_spout_2",
+			       "eventos_inicio_spout_1",
+			       "eventos_inicio_spout_2",
+			       "eventos_fin_spout_1",
+			       "eventos_fin_spout_2",
+			       "ml_consumidos_spout_1",
+			       "ml_consumidos_spout_2"
+			       ))
+		# correct regex patterns
+		patterns <- c(
+			      "[0-9]", # n_sesion
+			      "[0-9]{4} [0-9]{2} [0-9]{2}", # fecha
+			      "[a-z]+_[a-z]+_[a-z]+_[a-z]+", # droga droga1_droga2_metodo_area
+			      "[0-9]+_[0-9]+_[a-z]+", # dosis dosis1_dosis2_unidad de medida
+			      "[0-9]", # ID
+			      "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_inicio
+			      "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_termino
+			      "[0-9]", # n_licometro
+			      "[a-z]", # estimulo_spout_1
+			      "[a-z]", # estimulo_spout_2
+			      "[0-9]+", # licks_inicio_spout_1
+			      "[0-9]+", # licks_inicio_spout_2
+			      "[0-9]+", # licks_fin_spout_1
+			      "[0-9]+", # licks_fin_spout_2
+			      "[0-9]+", # eventos_inicio_spout_1
+			      "[0-9]+", # eventos_inicio_spout_2
+			      "[0-9]+", # eventos_fin_spout_1
+			      "[0-9]+", # eventos_fin_spout_2
+			      "[0-9]+", # ml_consumidos_spout_1
+			      "[0-9]+" # ml_consumidos_spout_2
+		)
+		val_cols(x, patterns)
+		return(out) 
+}
+
+val_names <- function(metadata, c_names){
+	if ( sum(c_names == names(metadata)) != length(names(metadata))){
+							       stop("error")
+}
+	else{
+		message("Column names validation PASS!")
+	}
+}
+possibly_val_names <- possibly(val_names, otherwise = print("Column names do not match expected ones"))
+
+val_cols <- function(metadata, patterns){
+	pmap(
+	     list(names(metadata), patterns),
+	     function(c_names_, patterns_){
+		     metadata %>%
+			     col_vals_regex(contains(c_names_), patterns_)
+	     }
+	     )
+	return(message("Metadata check succesful!"))
+}
+```
+
+# [2.1] test load_metadata
+
+```{r}
+metadata <- load_metadata(
+				  read_csv("../test/files/metadata_fed_mayo.csv", col_types = cols(.default = "c"))
+				  )
+```
+# [3.0] merge_inputs
+
+This function is simply a wrapper for load_data and load_metadata + the merge
+
+```{r}
+# merge inputs
+merge_inputs <- function(metadata, data_directory){
+	metadata <- load_metadata(
+	  # importing as character allows for regex pattern matching
+				  read_csv(metadata, col_types = cols(.default = "c"))
+				  )
+	data_file <- load_data(data_directory)
+	data_file %>%
+	  # ID and fecha should be enough, as long as animals only
+	  # get 1 experimental session per day
+		left_join(metadata, by = c("ID", "fecha")) -> out
+	# IOW labs lickometer data should NOT produce any NA
+	# an NA is likely data corruption
+	error_check <- names(which(colSums(!is.na(out)) == 0))
+	if(length(error_check) != 0){
+		print("Possible errors in cols...")
+		print(error_check)
+		return(out)
+	}
+	else{
+		# at this point all data should be in the correct format
+		# so we add date in posix_ms for time activity correction
+		# function
+		out %>%
+		drop_na() %>% # at this point na means that data does not have metadata
+	    # in metadata there should be no user "NA" inputs
+	    # all NA should be specified by the user as per the correct format
+	    # see docs
+		mutate(
+		       hora_inicio_ms = paste(fecha, hora_inicio, sep = " ") %>%
+					lubridate::ymd_hms() %>%
+					lubridate::seconds() %>%
+					as.numeric() * 1e3,
+		       hora_fin_ms = paste(fecha, hora_termino, sep = " ") %>%
+					lubridate::ymd_hms() %>%
+					lubridate::seconds() %>%
+					as.numeric() * 1e3,
+					tipo_recompensa = if_else(sensor == 0, estimulo_spout_1, estimulo_spout_2)
+		) -> out
+		print("Data merged!")
+		return(out)
+	}
+}
+```
+
+# [3.1] test merge_inputs
+
+```{r}
+test_data_merge <- merge_inputs(
+	     "../test/files/metadata_fed_mayo.csv",
+	     "../test/files"
+	     )
+```
+# [3.2] minimal plot
+
+non-corrected data
+
+```{r}
+test_data_merge %>% 
+  ggplot(aes(
+    tiempo,
+    actividad,
+    color = tipo_recompensa
+  )) +
+  geom_line() +
+  facet_grid(n_sesion~ID)
+```
+
+# [4.0] time_activity_correction
+
+```{r}
+# time activity correction
+
+# 1: import data from merged -csv
+# 2: add time of each activity to the starting time of the program
+#    (done as column "tiempo_fecha_ms")
+# 3: compare time of each activity to start and end time of each session
+# 4: add a column that contains binary data for valid/non-valid rows
+#    (0: no 1:yes)
+
+# hora_inicio_ms <= tiempo_fecha_ms < hora_fin_ms + fecha_ms
+
+
+time_activity_correction <- function(merged_data) {
+  merged_data %>% mutate(valido = ifelse(
+    (hora_inicio_ms <= tiempo_fecha_ms) &
+      (tiempo_fecha_ms < hora_fin_ms),
+    "1",
+    "0"
+  ))
+}
+```
+
+# [4.1] test time_activity_correction
+
+```{r}
+time_activity_corrected_data <- test_data_merge %>% 
+  time_activity_correction()
+
+# check if data was corrected by time
+
+# non-corrected data
+test_data_merge %>% 
+  group_by(ID, n_sesion) %>% 
+  mutate(
+    tiempo = tiempo - tiempo[1]
+  ) %>% 
+  summarise(
+    session_length = max(tiempo) / (1000 * 60)
+  )
+
+# corrected data
+time_activity_corrected_data %>% 
+  # this is the boolean produced by the function
+  filter(valido == 1) %>% 
+  group_by(ID, n_sesion) %>% 
+  mutate(
+    tiempo = tiempo - tiempo[1]
+  ) %>% 
+  summarise(
+    session_length = max(tiempo) / (1000 * 60)
+  )
+```
+
+# [5.0] uncumulate
+
+```{r}
+# uncumulate
+uncumulate <- function(merged_input){
+         merged_input %>%
+                 group_by(ID, n_sesion, sensor) %>%
+                 mutate(
+                   # NA_real_ is to preserve dbl class
+                        evento_no_acumulado = if_else(evento - lag(evento) > 0, 1, NA_real_),
+                        actividad_no_acumulada = if_else(actividad - lag(actividad) > 0, 1, NA_real_)
+                        ) %>%
+                 ungroup()
+}
+```
+
+# [5.1] test uncumulate
+
+
+```{r}
+uncumulate_data <- time_activity_corrected_data %>% 
+  uncumulate()
+
+uncumulate_data %>% 
+  filter(
+    ID == "320",
+    n_sesion == "1",
+    tipo_recompensa == "sacarosa"
+  ) %>% 
+  select(
+    evento,
+    evento_no_acumulado
+  )
+```
+
+# [6.0] interval_estimate
+
+This is the same as inter lick intervals
+
+```{r}
+#interval estimate
+
+interval_estimate <- function(merged_input){
+  merged_input %>% group_by(ID,n_sesion,sensor) %>%
+    mutate(interval_estimate = tiempo-lag(tiempo))
+}
+```
+
+# [6.1] test interval_estimate
+
+```{r}
+interval_estimate_data <- uncumulate_data %>% 
+  interval_estimate()
+
+interval_estimate_data %>% 
+  filter(interval_estimate <= 500) %>% 
+  ggplot(aes(
+    interval_estimate
+  )) +
+  geom_histogram()
+```
+# [7.0] bin_calculation
+
+```{r}
+bin_calculation <- function(merged_data, bin_size_ms){
+	merged_data %>%
+		group_by(
+			 ID, n_sesion
+			 ) %>%
+		mutate(
+		  # time starts at 0
+		       tiempo_relativo = tiempo - tiempo[1],
+		       bins = cut(
+				  tiempo_relativo,
+				  breaks = c(seq(0, max(tiempo_relativo), bin_size_ms)),
+				  labels = FALSE,
+				  include.lowest = TRUE
+				  )
+		       )
+}
+```
+
+# [7.1] test bin_calculation
+
+```{r}
+bin_calculation_data <- interval_estimate_data %>% 
+  filter(valido == 1) %>% 
+  bin_calculation(., 1000 * 60 * 5) # ten minutes bins
+
+bin_calculation_data %>% 
+  filter(
+    tipo_recompensa == "sacarosa"
+    ) %>% 
+  group_by(
+    ID,
+    n_sesion,
+    bins
+  ) %>% 
+  summarise(
+    licks_per_bin = n()
+  ) %>% 
+  ggplot(aes(
+    bins,
+    licks_per_bin
+  )) +
+  geom_point() +
+  geom_line() +
+  facet_grid(n_sesion ~ ID)
+```
+
+# [8.0] burst_estimates
+
+burst_estimates calculates clusters of licks based on a fixed threshold
+typical = 250 - 1000 ms
+
+```{r}
+detect_bursts <- function(data_final, threshold){
+	data_final %>%
+		group_by(ID, sensor, n_sesion) %>%
+		mutate(
+		       cluster_bool = if_else(interval_estimate > threshold,
+					      "out_cluster", "in_cluster") %>% as.factor()
+		       ) %>%
+		mutate(valid_cluster = if_else(
+						   cluster_bool == "in_cluster" &
+						   lead(cluster_bool) == "out_cluster" &
+							   lag(cluster_bool) == "out_cluster", FALSE, TRUE)) %>%
+		ungroup()
+}
+```
+
+# [8.1] test burst_estimates
+
+```{r}
+burst_data <- bin_calculation_data %>% 
+  filter(valido == 1) %>% 
+  interval_estimate() %>% 
+  detect_bursts(., 500)
+
+burst_data %>% 
+  filter(
+    tipo_recompensa == "sacarosa",
+    ID == "320",
+    n_sesion == "1"
+  ) %>% 
+  ggplot(aes(
+    tiempo,
+    interval_estimate,
+    color = cluster_bool
+  )) + 
+  geom_point() +
+  geom_line() +
+  facet_wrap(~cluster_bool, scales = "free")
+```
+
+# [9.0] n_clusters
+
+this function count clusters
+poor optimization
+
+```{r}
+make_groups <- function(x){
+  counter = 0
+  out = c(0)
+  for (i in 1:length(x)){
+    if (i > 1){
+      if(x[i] != x[i-1]){
+        counter = counter + 1
+        out = append(out, counter)
+      }
+      else{
+        out = append(out, counter)
+      }    
+    }
+  }
+  return(out)
+} 
+
+
+n_clusters <- function(merged_input){
+	merged_input %>%
+		group_by(ID, sensor, n_sesion) %>%
+		mutate(
+			tmp_bool = as.numeric(as.factor(cluster_bool)) %>% replace_na(0),
+			n_clusters = make_groups(tmp_bool)
+		) %>%
+		select(-tmp_bool) %>%
+		ungroup() -> out
+	out %>%
+		group_by(ID, sensor, n_sesion, n_clusters) %>%
+		summarise(cluster_size = n()) %>%
+		left_join(out) %>%
+		ungroup() -> outt
+	return(out)
+}
+```
+
+# [9.1] test n_clusters
+
+```{r}
+n_clusters_data <- burst_data %>% 
+  n_clusters()
+```
+# [10.0] pause_ms
+
+```{r}
+pause_ms <- function(merged_data) {
+  diff <- merged_data %>%
+    subset(select=c(ID, sensor, n_sesion, cluster_bool, bins,tiempo))%>%
+    group_by(ID, sensor, n_sesion, cluster_bool, bins) %>%
+    mutate(t_min = min(tiempo),
+           t_max = max(tiempo)) %>%
+    mutate(valid_pause = ifelse(cluster_bool == "out_cluster", NA, "")) %>%
+    subset(select = -tiempo) %>%
+    unique() %>%
+    drop_na() %>%
+    ungroup() %>%
+    subset(select = -valid_pause) %>%
+    group_by(ID, sensor, n_sesion, cluster_bool) %>%
+    mutate(pause_ms = lead(t_min) - t_max) %>%
+    ungroup()
+  
+  dplyr::left_join(merged_data, diff)
+}
+```
+
+# [10.1] test pause_ms
+
+```{r}
+pause_ms_data <- n_clusters_data %>% 
+  pause_ms()
+```
+# [11.0] synch_lick_event
+
+```{r}
+synch_lick_event <- function(ds){
+plan(multisession, workers = 4)
+ds %>%
+	mutate(rn = row_number()) -> ds
+ds %>% select(rn) -> row_index
+ds %>%
+	group_split(
+		    ID,
+		    n_sesion,
+		    sensor
+		    ) %>%
+	map_dfr(., function(x){
+			x %>%
+				filter(evento_no_acumulado == 1) %>%
+				select(rn) -> event_indices
+		       tibble(
+			      start_ = lag(unlist(event_indices), default = min(row_index)),
+			      end_ = lead(unlist(event_indices), default = max(row_index)),
+			      idx = event_indices
+			      )
+}) -> out
+	return(
+	bind_rows(
+	as.list(as.data.frame(t(out))) %>%
+		future_map(., function(x){
+				rows <- unlist(c(slice(row_index, x[1]:x[2])))
+				ds[rows,] %>%
+					mutate(
+					       event_id = x[3],
+					       tiempo_peri_evento = tiempo - tiempo[which(rn == x[3])]
+					) %>% filter(sensor == ds$sensor[x[3]])
+			      })
+	)
+	)
+}
+```
+
+# [11.1] test synch_lick_event
+
+```{r}
+synch_lick_event_data <- pause_ms_data %>% 
+	synch_lick_event()
+```
+# [12.0] unnest
+
+```{r}
+synch_lick_event_data %>%
+	unnest(rn) -> out
+```
+
