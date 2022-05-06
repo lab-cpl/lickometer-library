@@ -1,7 +1,16 @@
 ---
 title: "Lickometer library"
-output: html_notebook
+output:
+  html_document:
+    df_print: paged
 ---
+
+# Rmarkdown settings
+
+```{r}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, fig.align = "center") 
+```
+
 
 # libs
 
@@ -206,6 +215,7 @@ metadata <- load_metadata(
 				  read_csv("../test/files/metadata_fed_mayo.csv", col_types = cols(.default = "c"))
 				  )
 ```
+
 # [3.0] merge_inputs
 
 This function is simply a wrapper for load_data and load_metadata + the merge
@@ -264,19 +274,172 @@ test_data_merge <- merge_inputs(
 	     "../test/files"
 	     )
 ```
-# [3.2] minimal plot
 
-non-corrected data
+# [3.2.1] licks and events for 4 days of FR baseline
+
+-   Library merges data with metadata, adding useful columns to make analysis pipeline easier
+-   Proposal to add experimental group + small label to identify experiment
 
 ```{r}
-test_data_merge %>% 
+# adding experimental groups
+test_data_merge <- test_data_merge %>% 
+  mutate(
+    group = case_when(
+      ID %in% c(320, 323, 325, 326) ~ "uncertainty",
+      TRUE ~ "control"
+    )
+  )
+
+# Get total licks per spout for each session
+activity_per_session <- test_data_merge %>% 
+  group_by(
+    ID,
+    n_sesion,
+    tipo_recompensa,
+    group
+  ) %>% 
+  summarise(
+    licks = max(actividad),
+    events = max(evento)
+  )
+
+licks_p <- activity_per_session %>% 
   ggplot(aes(
-    tiempo,
-    actividad,
-    color = tipo_recompensa
+    n_sesion,
+    licks,
+    color = tipo_recompensa,
+    group = tipo_recompensa
   )) +
+  geom_point() +
   geom_line() +
-  facet_grid(n_sesion~ID)
+  facet_wrap(group~ID, ncol = 4, scales = "free") +
+  # AESTHETICS
+  theme_bw() +
+  labs(color = "Reward type") +
+  ylab("Number of licks per spout") +
+  xlab("FR5 session number") +
+  theme(
+    text = element_text(size = 14)
+  ) +
+  scale_colour_manual(
+    values = c("agua" = "blue", "sacarosa" = "#006400")
+    )
+
+event_p <- activity_per_session %>% 
+  ggplot(aes(
+    n_sesion,
+    events,
+    color = tipo_recompensa,
+    group = tipo_recompensa
+  )) +
+  geom_point() +
+  geom_line() +
+  facet_wrap(group~ID, ncol = 4, scales = "free") +
+  # AESTHETICS
+  theme_bw() +
+  labs(color = "Reward type") +
+  ylab("Number of events per spout") +
+  xlab("FR5 session number") +
+  theme(
+    text = element_text(size = 14)
+  ) +
+  scale_colour_manual(
+    values = c("agua" = "blue", "sacarosa" = "#006400")
+    )
+
+```
+
+## plot licks
+
+```{r}
+licks_p
+```
+
+## plot events
+
+```{r}
+event_p
+```
+
+# [3.2.2] licks and events for 4 days of FR baseline by group
+
+```{r}
+# same plot as above by group + point estimate error
+activity_per_session_group <- activity_per_session %>%
+  group_by(
+    group,
+    n_sesion,
+    tipo_recompensa
+  ) %>% 
+  summarise(
+    licks_m = mean(licks),
+    events_m = mean(events),
+    err_l = sd(licks) / sqrt(n()),
+    err_e = sd(events) / sqrt(n())
+  ) %>% 
+  ungroup()
+
+licks_g_p <- activity_per_session_group %>% 
+  filter(tipo_recompensa == "sacarosa") %>% 
+  ggplot(aes(
+    n_sesion,
+    licks_m,
+    color = group,
+    group = group,
+    ymin = licks_m - err_l,
+    ymax = licks_m + err_l
+  )) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(width = 0.3) +
+  # AESTHETICS
+  theme_bw() +
+  labs(color = "Experimental group") +
+  ylab("Number of licks sucrose spout") +
+  xlab("FR5 session number") +
+  theme(
+    text = element_text(size = 14)
+  ) +
+  scale_colour_manual(
+    values = c("control" = "blue", "uncertainty" = "#006400")
+    )
+
+events_g_p <- activity_per_session_group %>% 
+  filter(tipo_recompensa == "sacarosa") %>% 
+  ggplot(aes(
+    n_sesion,
+    events_m,
+    color = group,
+    group = group,
+    ymin = events_m - err_e,
+    ymax = events_m + err_e
+  )) +
+  geom_point() +
+  geom_line() +
+  geom_errorbar(width = 0.3) +
+  # AESTHETICS
+  theme_bw() +
+  labs(color = "Experimental group") +
+  ylab("Number of events sucrose spout") +
+  xlab("FR5 session number") +
+  theme(
+    text = element_text(size = 14)
+  ) +
+  scale_colour_manual(
+    values = c("control" = "blue", "uncertainty" = "#006400")
+    )
+```
+
+## plot licks
+
+```{r}
+licks_g_p
+```
+
+## plot events
+
+```{r}
+events_g_p
 ```
 
 # [4.0] time_activity_correction
@@ -313,7 +476,7 @@ time_activity_corrected_data <- test_data_merge %>%
 # check if data was corrected by time
 
 # non-corrected data
-test_data_merge %>% 
+uncorrected <- test_data_merge %>% 
   group_by(ID, n_sesion) %>% 
   mutate(
     tiempo = tiempo - tiempo[1]
@@ -323,7 +486,7 @@ test_data_merge %>%
   )
 
 # corrected data
-time_activity_corrected_data %>% 
+corrected <- time_activity_corrected_data %>% 
   # this is the boolean produced by the function
   filter(valido == 1) %>% 
   group_by(ID, n_sesion) %>% 
@@ -332,6 +495,11 @@ time_activity_corrected_data %>%
   ) %>% 
   summarise(
     session_length = max(tiempo) / (1000 * 60)
+  )
+
+corrected %>% 
+  bind_cols(
+    session_length_uncorrected = uncorrected$session_length
   )
 ```
 
@@ -352,7 +520,6 @@ uncumulate <- function(merged_input){
 ```
 
 # [5.1] test uncumulate
-
 
 ```{r}
 uncumulate_data <- time_activity_corrected_data %>% 
@@ -385,6 +552,8 @@ interval_estimate <- function(merged_input){
 
 # [6.1] test interval_estimate
 
+This show typical ILI structure with licks mode around 120~ ms and failed licks around 250~ ms
+
 ```{r}
 interval_estimate_data <- uncumulate_data %>% 
   interval_estimate()
@@ -392,10 +561,26 @@ interval_estimate_data <- uncumulate_data %>%
 interval_estimate_data %>% 
   filter(interval_estimate <= 500) %>% 
   ggplot(aes(
-    interval_estimate
+    interval_estimate,
+    fill = group
   )) +
-  geom_histogram()
+  geom_histogram(alpha = 0.5, bins = 100) +
+  geom_vline(xintercept = 125, color = "gray10") +
+  geom_vline(xintercept = 260, color = "gray10") +
+  theme_bw() +
+  labs(color = "Experimental groupo") +
+  ylab("Frequency") +
+  xlab("Interlick Interval") +
+  theme(
+    text = element_text(size = 14),
+    legend.position = "none"
+  ) +
+  scale_fill_manual(
+    values = c("control" = "blue", "uncertainty" = "#006400")
+    ) +
+  facet_wrap(~group)
 ```
+
 # [7.0] bin_calculation
 
 ```{r}
@@ -411,9 +596,15 @@ bin_calculation <- function(merged_data, bin_size_ms){
 				  tiempo_relativo,
 				  breaks = c(seq(0, max(tiempo_relativo), bin_size_ms)),
 				  labels = FALSE,
-				  include.lowest = TRUE
-				  )
-		       )
+				  include.lowest = FALSE
+				  ) %>% as.factor() %>% as.numeric()
+		       ) -> out
+  tmp <- out %>% drop_na()
+  bin_n <- max(tmp$bins) + 1
+  return(
+    out %>% 
+      mutate(bins = replace_na(bins, bin_n))
+  )
 }
 ```
 
@@ -421,34 +612,55 @@ bin_calculation <- function(merged_data, bin_size_ms){
 
 ```{r}
 bin_calculation_data <- interval_estimate_data %>% 
-  filter(valido == 1) %>% 
-  bin_calculation(., 1000 * 60 * 5) # ten minutes bins
+    filter(valido == 1) %>% 
+  bin_calculation(., 1000 * 60 * 10)
 
 bin_calculation_data %>% 
   filter(
     tipo_recompensa == "sacarosa"
     ) %>% 
   group_by(
-    ID,
+    group,
     n_sesion,
     bins
   ) %>% 
   summarise(
     licks_per_bin = n()
   ) %>% 
+  ungroup() %>% 
+  group_by(
+    group,
+    bins
+  ) %>% 
+  summarise(
+    licks_per_bin_m = mean(licks_per_bin),
+    err = sd(licks_per_bin) / sqrt(n())
+  ) %>% 
   ggplot(aes(
     bins,
-    licks_per_bin
+    licks_per_bin_m,
+    color = group,
+    ymin = licks_per_bin_m - err,
+    ymax = licks_per_bin_m + err
   )) +
   geom_point() +
   geom_line() +
-  facet_grid(n_sesion ~ ID)
+  geom_errorbar() +
+  theme_bw() +
+  labs(color = "Experimental group") +
+  ylab("Number of licks") +
+  xlab("10 min bins") +
+  theme(
+    text = element_text(size = 14)
+  ) +
+  scale_colour_manual(
+    values = c("control" = "blue", "uncertainty" = "#006400")
+    )
 ```
 
 # [8.0] burst_estimates
 
-burst_estimates calculates clusters of licks based on a fixed threshold
-typical = 250 - 1000 ms
+burst_estimates calculates clusters of licks based on a fixed threshold typical = 250 - 1000 ms
 
 ```{r}
 detect_bursts <- function(data_final, threshold){
@@ -492,8 +704,7 @@ burst_data %>%
 
 # [9.0] n_clusters
 
-this function count clusters
-poor optimization
+this function count clusters poor optimization
 
 ```{r}
 make_groups <- function(x){
@@ -538,6 +749,7 @@ n_clusters <- function(merged_input){
 n_clusters_data <- burst_data %>% 
   n_clusters()
 ```
+
 # [10.0] pause_ms
 
 ```{r}
@@ -567,6 +779,7 @@ pause_ms <- function(merged_data) {
 pause_ms_data <- n_clusters_data %>% 
   pause_ms()
 ```
+
 # [11.0] synch_lick_event
 
 ```{r}
@@ -610,13 +823,13 @@ ds %>%
 # [11.1] test synch_lick_event
 
 ```{r}
-synch_lick_event_data <- pause_ms_data %>% 
-	synch_lick_event()
+# synch_lick_event_data <- pause_ms_data %>% 
+# 	synch_lick_event()
 ```
+
 # [12.0] unnest
 
 ```{r}
-synch_lick_event_data %>%
-	unnest(rn) -> out
+# synch_lick_event_data %>%
+# 	unnest(rn) -> out
 ```
-
