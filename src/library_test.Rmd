@@ -120,6 +120,7 @@ load_metadata <- function(x) {
   # Check : that column names are correct and with the correct data type.
   # correct column names
   col_names <- c(
+              "pool",
 			       "n_sesion",
 			       "fecha",
 			       "droga",
@@ -143,6 +144,7 @@ load_metadata <- function(x) {
 			       )
   	# correct regex patterns
 		patterns <- c(
+		        "[a-z]", # pool
 			      "[0-9]", # n_sesion
 			      "[0-9]{4} [0-9]{2} [0-9]{2}", # fecha
 			      "[a-z]+_[a-z]+_[a-z]+_[a-z]+", # droga droga1_droga2_metodo_area
@@ -316,19 +318,139 @@ test_data <- load_experiment(
 	     "../test/files"
 	     )
 ```
-# [3.2] minimal plot
+# [3.2] PLOT A
 
 non-corrected data
 
 ```{r}
+test_data <- test_data %>% 
+  mutate(
+    group = if_else(ID %in% c(234, 235, 236, 245, 265,
+                              321, 322, 324, 327), "uncertainty", "control")
+  )
 test_data %>% 
+  filter(tipo_recompensa == "sacarosa") %>% 
+  group_by(pool, ID, n_sesion, group) %>% 
+  summarise(
+    licks = max(actividad),
+    events = max(evento)
+  ) %>% 
+  ungroup() %>% 
+  group_by(pool, n_sesion, group) %>% 
+  summarise(
+    licks_m = mean(licks),
+    err = sd(licks) / sqrt(n())
+  ) %>% 
   ggplot(aes(
-    timestamp,
-    actividad,
-    color = tipo_recompensa
+    n_sesion,
+    licks_m,
+    ymin = licks_m - err,
+    ymax = licks_m + err,
+    color = group,
+    group = group
   )) +
   geom_line() +
-  facet_grid(n_sesion~ID)
+  geom_errorbar() +
+  facet_wrap(~pool)
+```
+
+# [3.3] PLOT B
+
+```{r}
+bin_calculation_data <- test_data %>% 
+  uncumulate() %>% 
+  bin_calculation(., 60, 10) # 1 h session, 10 min bins
+
+bin_calculation_data %>% 
+  filter(tipo_recompensa == "sacarosa") %>% 
+  group_by(pool, ID, n_sesion, group, bins) %>% 
+  summarise(
+    licks = n()
+  ) %>% 
+  ungroup() %>% 
+  group_by(pool, group, bins) %>% 
+  summarise(
+    licks_m = mean(licks),
+    err = sd(licks) / sqrt(n())
+  ) %>% 
+  ggplot(aes(
+    bins,
+    licks_m,
+    ymin = licks_m - err,
+    ymax = licks_m + err,
+    color = group,
+    group = group
+  )) +
+  geom_line() +
+  geom_errorbar() +
+  facet_wrap(~pool)
+```
+# [3.4] PLOT C
+
+```{r}
+burst_data <- bin_calculation_data %>% 
+  uncumulate() %>% 
+  group_by(ID, n_sesion, sensor) %>% 
+  mutate(interval = interval_estimate(timestamp)) %>% 
+  burst_analysis(., 500)
+
+burst_data %>% 
+  filter(
+    tipo_recompensa == "sacarosa",
+    values == "in_cluster",
+    cluster_length > 1
+  ) %>% 
+  group_by(group, pool, ID, n_sesion) %>% 
+  summarise(
+    burst_length = mean(cluster_length)
+  ) %>% 
+  ungroup() %>% 
+  group_by(group, pool) %>% 
+  summarise(
+    burst_length_m = mean(burst_length),
+    err = sd(burst_length) / sqrt(n())
+  ) %>% 
+  ggplot(aes(
+    group,
+    burst_length_m,
+    ymin = burst_length_m - err,
+    ymax = burst_length_m + err
+  )) +
+  geom_col() +
+  geom_errorbar(width = 0.3) +
+  facet_wrap(~pool)
+
+```
+
+# [3.4] PLOT D
+
+```{r}
+burst_data %>% 
+  filter(
+    tipo_recompensa == "sacarosa",
+    values == "in_cluster",
+    cluster_length > 1
+  ) %>% 
+  group_by(ID, group, pool, n_sesion) %>% 
+  summarise(
+    cluster_n = n()
+  ) %>% 
+  ungroup() %>% 
+  group_by(group, pool) %>% 
+  summarise(
+    cluster_n_m = mean(cluster_n),
+    err = sd(cluster_n) / sqrt(n())
+  ) %>% 
+  ggplot(aes(
+    group,
+    cluster_n_m,
+    ymin = cluster_n_m - err,
+    ymax = cluster_n_m + err
+  )) +
+  geom_col() +
+  geom_errorbar(width = 0.3) +
+  facet_wrap(~pool)
+
 ```
 
 # [4.0] Uncumulate data
@@ -502,7 +624,7 @@ burst_analysis <- function(dataset, threshold){
 	  
 	  # Get estimates of burst by using rle R's base function 
 	  s <- ds %>% 
-	    group_by(ID, sensor, n_sesion, tipo_recompensa) %>% 
+	    group_by(ID, sensor, n_sesion, tipo_recompensa, group, pool) %>% 
 	    summarise(
 	          values = rle(cluster_bool)$values, # inside our outside burst
 	          length = rle(cluster_bool)$lengths) # number of timestamps asssociated with the burst
