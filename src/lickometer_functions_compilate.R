@@ -469,7 +469,7 @@ synch_lick_event <- function(ds, parallel){
   index_list <- split(out, seq(nrow(out))) 
   
   if (parallel) {
-    P <- pbmcapply(index_list, function(x) {
+    P <- pbmclapply(index_list, function(x) {
       rows <- x$start_[1]:x$end_[1] # This is a list of position of the start and
       # end of each event
       # first we slice the main dataset with that start and indices
