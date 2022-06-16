@@ -436,7 +436,7 @@ synch_lick_event <- function(ds, parallel){
   out <- ds %>%
     group_split(
       ID,
-      n_sesion,
+      fecha,
       sensor
     ) %>%
     map_dfr(., function(x){
