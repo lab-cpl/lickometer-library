@@ -498,7 +498,7 @@ synch_lick_event <- function(ds, parallel){
       # and transform event_id so it goes form 1 to n
       # note that with this settings event 1 could be sucrose
       # and event 2 could be water
-      group_by(ID, n_sesion) %>% 
+      group_by(ID, fecha) %>% 
       mutate(event_id = as.numeric(as.factor(event_id))) %>% 
       ungroup()
     # bind_rows is considerably slower
@@ -521,7 +521,7 @@ synch_lick_event <- function(ds, parallel){
       # and transform event_id so it goes form 1 to n
       # note that with this settings event 1 could be sucrose
       # and event 2 could be water
-      group_by(ID, n_sesion) %>% 
+      group_by(ID, fecha) %>% 
       mutate(event_id = as.numeric(as.factor(event_id))) %>% 
       ungroup()
     # This function is extremely slow
