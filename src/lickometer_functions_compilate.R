@@ -493,7 +493,7 @@ synch_lick_event <- function(ds, parallel){
       # we get back a unified dataset which now includes the peri event
       # timestamp for every event
       # this is kinda slow
-      data.table::rbindlist() %>% 
+      data.table::rbindlist(., fill = TRUE) %>% 
       # finally we group by animal and session
       # and transform event_id so it goes form 1 to n
       # note that with this settings event 1 could be sucrose
@@ -516,7 +516,7 @@ synch_lick_event <- function(ds, parallel){
         ) %>% 
         filter(sensor == sensor_event)
     }) %>% 
-      data.table::rbindlist() %>% 
+      data.table::rbindlist(., fill = TRUE) %>% 
       # finally we group by animal and session
       # and transform event_id so it goes form 1 to n
       # note that with this settings event 1 could be sucrose
