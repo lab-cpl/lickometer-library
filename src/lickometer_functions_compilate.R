@@ -137,8 +137,8 @@ load_metadata <- function(x) {
     "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_inicio
     "[0-9]{2} [0-9]{2} [0-9]{2}", # hora_termino
     "[0-9]", # n_licometro
-    "[a-z]", # estimulo_spout_1
-    "[a-z]", # estimulo_spout_2
+    "[a-z]+", # estimulo_spout_1
+    "[a-z]+", # estimulo_spout_2
     "[0-9]+", # licks_inicio_spout_1
     "[0-9]+", # licks_inicio_spout_2
     "[0-9]+", # licks_fin_spout_1
