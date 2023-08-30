@@ -530,3 +530,100 @@ synch_lick_event <- function(ds, parallel){
   }
   return(P)   
 }
+
+### This function creates a tibble with spec required by beezdemand
+### to analyze demand/cost curves
+# data = data imported from main lickometer library function
+# reward_type = as a string within "" the reward type you are interested
+# licks_events = either "licks" or "events"
+# demand_curve_sessions = a vector specifying the number of session corresponding
+# to demand curve c(1,2,3)
+data_for_demand_curve <- function(
+        data,
+        reward_type,
+        licks_events,
+        demand_curve_sessions
+        ){
+    unique_time_bins <-
+        data %>% 
+        group_by(ID, n_sesion) %>% 
+        filter(tipo_recompensa == reward_type) %>% 
+        ungroup() %>% 
+        mutate(
+            n_bin = as.integer(timestamp%/%600000)
+        ) %>% 
+        group_by(ID, pool, n_sesion, n_bin, droga, dosis) %>% 
+        summarise(
+            bin_licks = n(),
+            bin_events = length(evento %>% unique) - 1
+        ) %>% 
+        ungroup() %>% 
+        group_by(ID, n_sesion) %>%
+        arrange(n_bin, .by_group = TRUE) %>% 
+        pivot_longer(
+            c("bin_licks", "bin_events"),
+            names_to = "endpoint",
+            values_to = "val") %>%
+        ungroup() %>% 
+        complete(
+            nesting(ID,pool, n_sesion, endpoint, droga, dosis),
+            n_bin,
+            fill=list(val=0)) %>%
+        mutate(price = (case_when( 
+          n_bin == 0 ~ 5,
+          n_bin == 1 ~ 10,
+          n_bin == 2 ~ 20,
+          n_bin == 3 ~ 40,
+          n_bin == 4 ~ 80,
+          n_bin == 5 ~ 120))) %>%
+        ungroup() %>% 
+        filter(
+            endpoint == paste0("bin_", licks_events),
+            n_sesion %in% demand_curve_sessions
+        )
+    out <-
+        unique_time_bins %>% 
+        rename(
+            C = price,
+            Q = val
+        ) %>% 
+        mutate(
+            ID = paste(ID, droga, dosis, n_sesion, sep = ".")
+        ) %>% 
+        select(ID, C, Q)
+    return(out)
+}
+
+# runs the demand curve fit and parses data into two list
+parse_demand_curve_fit <- function(data){
+    fit <- beezdemand::FitCurves(
+        as.data.frame(data),
+        equation = "koff",
+        xcol = "C",
+        ycol = "Q",
+        idcol = "ID",
+        detailed = TRUE
+    )
+    tibble_out <- as_tibble(fit$dfres) %>% 
+        separate_wider_delim(id, ".", names = c("ID", "droga", "dosis", "n_sesion"))
+    fits <- fit$fits
+    fit_out <- 1:length(fits) %>% 
+        map_dfr(
+            ., purrr::possibly(
+                function(f){
+                ID <- names(fits[f])
+                df <- fits[[f]] %>% 
+                    broom::tidy() %>% 
+                    mutate(
+                        ID = ID
+                    )
+            }
+        )
+        ) %>% 
+        separate_wider_delim(ID, ".", names = c("ID", "droga", "dosis", "n_sesion"))
+    list_out <- list(
+        parsed = tibble_out,
+        fits = fit_out
+    )
+    return(list_out)
+}
