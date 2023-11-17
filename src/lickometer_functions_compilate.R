@@ -56,7 +56,7 @@ format_data_type <- function(raw_file){
       sensor = as.factor(sensor), # lickometer sensor/spout
       tiempo = as.numeric(tiempo), # ms from start of the program
       actividad = as.numeric(actividad), # cumulative licks per spout
-      evento = as.numeric(evento), # cumulative events per spout
+      evento = as.factor(evento), # cumulative events per spout
       exito = as.factor(exito), # boolean, if event gave or not a reward
       fecha = source_to_date(source), # date
       fecha_ms = source_to_date_posix_ms(source), # date in unix epoch
