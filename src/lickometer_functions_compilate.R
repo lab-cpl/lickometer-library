@@ -176,7 +176,7 @@ load_metadata <- function(x) {
     filter(if_any(everything(), ~ !is.na(.))) %>% # Filter out all NA rows
     mutate(
       pool = as.factor(pool),
-      n_sesion = as.factor(n_sesion),
+      n_sesion = as.numeric(as.character(n_sesion)),
       fecha = lubridate::ymd(fecha),
       droga = as.character(droga),
       dosis = as.character(dosis),
