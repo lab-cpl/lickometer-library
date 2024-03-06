@@ -594,6 +594,7 @@ data_for_demand_curve <- function(
     return(out)
 }
 
+
 # runs the demand curve fit and parses data into two list
 parse_demand_curve_fit <- function(data){
     fit <- beezdemand::FitCurves(
@@ -626,4 +627,40 @@ parse_demand_curve_fit <- function(data){
         fits = fit_out
     )
     return(list_out)
+}
+
+# check for unsystematic responses
+check_unsystematic <- function(standard_format_data){
+    d <-
+        standard_format_data %>% 
+        ungroup() %>% 
+        separate(ID, c("id", "droga", "dosis", "n_sesion"), sep = "\\.") %>% 
+        rename(
+            x = C,
+            y = Q
+        ) %>% 
+        group_by(id, droga, dosis, n_sesion) %>% 
+        group_split() 
+    out <-
+        d %>% 
+        map(
+            ., possibly(
+                function(x){
+                   # note change parameters as needed
+                    beezdemand::CheckUnsystematic(
+                        dat = x,
+                        deltaq = 0.025,
+                        bounce = 0.2,
+                        reversals = 1,
+                        ncons0 = 2
+                    ) %>% 
+                        as_tibble() %>% 
+                        mutate(
+                            drug = x$droga[1],
+                            dose = x$dosis[1]
+                        )
+                }
+            )
+        )
+    return(out)
 }
