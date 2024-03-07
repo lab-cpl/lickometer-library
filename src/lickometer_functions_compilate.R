@@ -152,7 +152,7 @@ load_metadata <- function(x) {
   )
   
   # run check for names and values
-  colCheck <- sapply(1:length(col_names), function(colNameIndex) {
+  colCheck <- base::sapply(1:length(col_names), function(colNameIndex) {
     colName <- col_names[colNameIndex]
     index <- which(names(x) == colName) # which column in metadata is colName	  
     if(length(index) == 1) { # TRUE if colName exists only once
@@ -664,3 +664,4 @@ check_unsystematic <- function(standard_format_data){
         )
     return(out)
 }
+
