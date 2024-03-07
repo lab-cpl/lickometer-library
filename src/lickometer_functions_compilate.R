@@ -605,6 +605,7 @@ parse_demand_curve_fit <- function(data){
         idcol = "ID",
         detailed = TRUE
     )
+    full <- fit
     tibble_out <- as_tibble(fit$dfres) %>% 
         separate_wider_delim(id, ".", names = c("ID", "droga", "dosis", "n_sesion"))
     fits <- fit$fits
@@ -624,7 +625,8 @@ parse_demand_curve_fit <- function(data){
         separate_wider_delim(ID, ".", names = c("ID", "droga", "dosis", "n_sesion"))
     list_out <- list(
         parsed = tibble_out,
-        fits = fit_out
+        fits = fit_out,
+        complete = full
     )
     return(list_out)
 }
