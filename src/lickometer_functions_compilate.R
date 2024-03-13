@@ -166,7 +166,7 @@ load_metadata <- function(x) {
     message("Import metada ok!!")
   } else {
     stop(paste("WARNING: The following required columns are either not found on the dataset or have the incorrect format:",
-               paste(col_names[colCheck], collapse = "\n"), 
+               paste(col_names[colCheck==FALSE], collapse = "\n"), 
                sep =  "\n"))
   }
   
