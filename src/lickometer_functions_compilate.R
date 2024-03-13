@@ -157,7 +157,7 @@ load_metadata <- function(x) {
     index <- which(names(x) == colName) # which column in metadata is colName	  
     if(length(index) == 1) { # TRUE if colName exists only once
       #  TRUE if column, except NA matches pattern
-      ifelse(all(na.omit(str_detect(x %>% pull(colName), patterns[colNameIndex]))), TRUE, FALSE) 
+      ifelse(all(na.omit(str_detect(x %>% pull(index), patterns[colNameIndex]))), TRUE, FALSE) 
     }
   })
   
