@@ -680,6 +680,8 @@ event_latency <- function(data){
             ID,
             n_sesion,
             tipo_recompensa,
+	    droga,
+	    dosis,
             evento
         ) %>% 
         slice_head(n = 1) %>% 
