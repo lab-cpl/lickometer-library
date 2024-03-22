@@ -667,3 +667,34 @@ check_unsystematic <- function(standard_format_data){
     return(out)
 }
 
+# event latency ----
+pacman::p_load(
+    tidyverse,
+    ggplot2
+)
+
+event_latency <- function(data){
+    out <-
+        data %>%
+        group_by(
+            ID,
+            n_sesion,
+            tipo_recompensa,
+            evento
+        ) %>% 
+        slice_head(n = 1) %>% 
+        summarise(
+            event_time = (timestamp / 1000) / 60
+        ) %>% 
+        mutate(
+            evento = as.numeric(as.character(evento))
+        ) %>% 
+        filter(event_time != 0)
+    return(out)
+}
+
+
+
+
+    
+
