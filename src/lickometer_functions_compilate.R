@@ -659,7 +659,8 @@ check_unsystematic <- function(standard_format_data){
                         as_tibble() %>% 
                         mutate(
                             drug = x$droga[1],
-                            dose = x$dosis[1]
+                            dose = x$dosis[1],
+			    n_sesion = x$n_sesion[1]
                         )
                 }
             )
