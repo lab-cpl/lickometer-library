@@ -390,6 +390,7 @@ burst_analysis <- function(dataset, threshold){
     s <- ds %>% 
       group_by(ID, sensor, n_sesion, tipo_recompensa, group, pool) %>% 
       summarise(
+	.groups = 'drop',
         values = rle(cluster_bool)$values, # inside or outside burst
         length = rle(cluster_bool)$lengths) # number of timestamps asssociated with the burst
     
