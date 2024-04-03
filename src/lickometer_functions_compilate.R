@@ -385,7 +385,7 @@ burst_analysis <- function(dataset, threshold){
     
     # Get estimates of burst by using rle R's base function 
     s <- ds %>% 
-      group_by(ID, sensor, n_sesion, tipo_recompensa, group, pool) %>% 
+      group_by(ID, sensor, n_sesion, tipo_recompensa, group, pool, droga, dosis) %>% 
       summarise(
 	.groups = 'drop',
         values = rle(cluster_bool)$values, # inside or outside burst
