@@ -379,7 +379,7 @@ burst_analysis <- function(dataset, threshold){
     group_split()
   
   # Get burst summaries stats
-  burst_summary <- lapply(burst_summary, function(ds) {
+  burst_summary <- lapply(burst_ds, function(ds) {
     # Fix first assignment
     ds$cluster_bool[1] <- "in_cluster" # First timestamp will always be its own cluster
     
