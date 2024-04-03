@@ -375,7 +375,8 @@ burst_analysis <- function(dataset, threshold){
     # this determines whether each timestamp belongs in a cluster or not
     mutate(
       cluster_bool = ifelse(interval > threshold, "out_cluster", "in_cluster")
-    ) 
+    ) %>%
+    group_split()
   
   # Get burst summaries stats
   burst_summary <- lapply(burst_summary, function(ds) {
