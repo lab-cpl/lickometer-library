@@ -371,17 +371,13 @@ burst_analysis <- function(dataset, threshold){
   
   # Run function
   burst_ds <- dataset %>%
-    group_by(ID, sensor, n_sesion) %>%
+    group_by(ID, sensor, n_sesion, droga, dosis) %>%
     # this determines whether each timestamp belongs in a cluster or not
     mutate(
       cluster_bool = ifelse(interval > threshold, "out_cluster", "in_cluster")
     ) 
   
   # Get burst summaries stats
-  burst_summary <- burst_ds %>%
-    group_by(ID, sensor, n_sesion, .add = TRUE) %>% 
-    group_split() 
-  
   burst_summary <- lapply(burst_summary, function(ds) {
     # Fix first assignment
     ds$cluster_bool[1] <- "in_cluster" # First timestamp will always be its own cluster
