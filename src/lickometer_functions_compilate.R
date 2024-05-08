@@ -230,7 +230,7 @@ load_experiment <- function(metadataFileName, data_directory_path) {
     filter(n != 1) %>% 
     select(ID, fecha) %>% 
     mutate(info = paste(ID, fecha, sep = "|")) %>% 
-    pull(info)
+    dplyr::pull(info)
   if(length(check) != 0) {
     stop(paste("The following combinations of ID  and date are repeated", 
                paste(check, collapse = "\n"),
