@@ -694,6 +694,31 @@ event_latency <- function(data){
     return(out)
 }
 
+# time out licks functions ----
+time_out_licks <- function(data, win_size) {
+  # get event locations
+  events_loc <- which(dplyr::if_else(lag(data$evento, default = NA) != data$evento, 1, 0)==1)
+  wins <-
+    events_loc %>%
+    imap(
+      ., function(X, idx) {
+        ts <- data[X, ]$tiempo
+	# this vector contains the start and end of the window
+        v <- c(ts - win_size, ts + win_size)
+        dat <- data %>%
+          filter(
+            tiempo >= v[1] & tiempo <= v[2]
+          ) %>%
+          mutate(
+            idx = idx,
+            tiempo = tiempo - ts)
+        return(dat)
+      }, .progress = TRUE
+    )
+  return(wins)
+}
+
+
 
 
 
