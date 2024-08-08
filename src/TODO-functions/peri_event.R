@@ -42,11 +42,44 @@ peri_event <- function(data, win_size) {
 
 plan(multisession, workers = 8)
 wins <-
+    1:20 %>% 
+    map(., function(X){
     data %>% 
     group_by(ID, tipo_recompensa, dosis, droga) %>% 
     group_split() %>% 
-    future_map(., ~peri_event(.x, 1000*20)) %>% 
-    bind_rows()
+    future_map(., ~peri_event(.x, 1000*X)) %>% 
+    bind_rows() %>% 
+    filter(tipo_recompensa == "sac", tiempo > 0) %>% 
+    group_by(ID, dosis, droga, idx) %>% 
+    mutate(dosis = as.numeric(str_extract(dosis, "[0-9]+"))) %>%
+    summarise(
+        time_out_licks = n())
+    }
+    )
+
+mdl <-
+    wins %>% 
+    imap_dfr(
+        ., function(X, idx){
+                lmerTest::lmer(
+                (time_out_licks) ~ (dosis) + (1 | ID),
+                data = X %>%
+                filter(droga == "oxa_acsf_canulauni_pvn") %>% 
+                mutate(dosis = (dosis))) %>%
+                broom.mixed::tidy() %>% 
+                filter(effect=="fixed", term=="dosis") %>% 
+                mutate(idx = idx)
+        }
+    )
+
+mdl %>% 
+    ggplot(aes(
+        idx, estimate
+    )) +
+    geom_hline(yintercept = 0) +
+    geom_line() +
+    geom_ribbon(aes(ymin=estimate-std.error,ymax=estimate+std.error), alpha = 0.1) +
+    facet_wrap(~term)
 
 mdl_data <-
     wins %>% 
@@ -62,7 +95,6 @@ mdl_data %>%
     ggplot(aes(
         dosis, time_out_licks, color = droga
     )) +
-    geom_hline(yintercept = 0) +
     stat_summary(
         fun.data = "mean_se",
         geom = "pointrange",
@@ -74,28 +106,45 @@ mdl <- lmerTest::lmer(
     (time_out_licks) ~ (dosis) + (1 | ID),
     data = mdl_data %>%
         filter(droga == "tcs_veh_canulauni_pvn") %>% 
-        mutate(dosis = (dosis))
+        mutate(dosis = as.factor(dosis))
 )
 summary(mdl)
 
-qqnorm(residuals(mdl, type = "pearson"))
-qqline(residuals(mdl, type = "pearson"))
+
+emmeans::emtrends(
+    mdl,
+    var = "dosis"
+) %>% emmeans::test()
 
 mdl_emm <-
     emmeans::emmeans(
     mdl,
     pairwise ~ dosis,
-    regrid = "response",
-    at = list(dosis = c(0, 62, 125, 250))
-    ) %>% 
-    emmeans::test(., adjust = "mvt")
+    type = "response",
+#    at = list(dosis = c(0, 62, 125, 250))
+    )
 mdl_emm
+
+contr <- list(        #Reduzco el número de comparaciones que realiza normalmente el emmeans, para quedarme solo con las comparaciones contra el veh y así no perder significancia estadística.
+    "0_0_pmol vs 62_0_pmol" = c(1, -1, 0, 0),  #Forma de decirle que quiero veh - segunda dosis
+    "0_0_pmol vs 125_0_pmol" = c(1, 0, -1, 0), #Forma de decirle que quiero veh - tercera dosis
+    "0_0_pmol vs 250_0_pmol" = c(1, 0, 0, -1)) #Forma de decirle que quiero veh - cuarta dosis
+
+mdl_constrasts <- mdl_emm %>% 
+    emmeans::contrast(., contr, adjust = "fdr")
+mdl_constrasts
+
+mdl_raw %>% 
+    ggplot(aes(dosis, response)) +
+    geom_point() +
+    geom_smooth(method="gam", se = FALSE, formula = y ~ s(x, bs = "cs", k=3)) +
+    facet_wrap(~ID, scales = "free")
 
 mdl_raw <-
     mdl_data %>% 
     filter(droga == "tcs_veh_canulauni_pvn") %>% 
     group_by(ID, droga, dosis) %>% 
-    summarise(response = mean(time_out_licks)) 
+    rename(response = time_out_licks)
 
 mdl_emm$emmeans %>% 
     as_tibble() %>% 
@@ -107,14 +156,20 @@ mdl_emm$emmeans %>%
         size = 5,
         color = "purple"
     ) +
-    geom_point(
+    geom_errorbar(
+        aes(ymin = lower.CL, ymax = upper.CL)
+    ) +
+    geom_violin(
         data = mdl_raw,
-        aes(color = as.factor(ID))
+        aes(color = as.factor(ID), group = dosis),
+        fill = NA
     ) +
     stat_summary(
         data = mdl_raw,
         fun.data = "mean_cl_boot",
-        geom = "errorbar",
+        geom = "point",
+        shape = 15,
+        size = 3,
         aes(group = dosis)
     )
 

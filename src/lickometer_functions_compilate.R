@@ -697,7 +697,7 @@ event_latency <- function(data){
 # time out licks functions ----
 time_out_licks <- function(data, win_size) {
   # get event locations
-  events_loc <- which(dplyr::if_else(lag(data$evento, default = NA) != data$evento, 1, 0)==1)
+  events_loc <- which(dplyr::if_else(lag(data$evento, default = NA) != data$evento, 1, 0)==1)-1
   wins <-
     events_loc %>%
     imap(
@@ -707,7 +707,7 @@ time_out_licks <- function(data, win_size) {
         v <- c(ts - win_size, ts + win_size)
         dat <- data %>%
           filter(
-            tiempo >= v[1] & tiempo <= v[2]
+            tiempo > v[1] & tiempo < v[2]
           ) %>%
           mutate(
             idx = idx,
